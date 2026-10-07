@@ -1,0 +1,256 @@
+# ==========================================================================
+# SmartCity Sentinel - central configuration
+# ==========================================================================
+# Every tunable value (thresholds, paths, model names, lane coordinates...)
+# lives in this file, NOT inside the code. Each module adds its own section
+# when it is implemented.
+#
+# All relative paths are resolved from the project root folder.
+# ==========================================================================
+
+project:
+  name: "SmartCity Sentinel"
+  version: "0.1.0"
+
+# Where things live on disk (relative to project root)
+paths:
+  data_dir: "data"
+  videos_dir: "data/videos"
+  audio_dir: "data/audio"
+  test_data_dir: "data/test"
+  models_dir: "models"
+  # Hugging Face downloads go here instead of C:\Users\...\.cache
+  # (keeps the small C: drive free and the project self-contained)
+  hf_cache_dir: "models/hf_cache"
+  logs_dir: "logs"
+
+logging:
+  level: "INFO"              # DEBUG, INFO, WARNING, ERROR
+  log_to_file: true
+  log_file: "sentinel.log"   # created inside paths.logs_dir
+  max_file_size_mb: 5        # rotate the log file when it gets this big
+  backup_count: 3            # keep this many old log files
+
+# Compute device for the AI models
+#   auto -> use the NVIDIA GPU (cuda) if available, otherwise CPU
+#   cuda -> force GPU
+#   cpu  -> force CPU (useful to test edge-device-like performance)
+device: "auto"
+
+# --------------------------------------------------------------------------
+# Module 1 - Video input
+# --------------------------------------------------------------------------
+video:
+  # Either a video file path (relative to project root) or a webcam index (0, 1, ...)
+  # Main demo clip: fixed camera at a city intersection (Pexels 13997539)
+  source: "data/videos/13997539_1080_1920_30fps.mp4"
+  # Shrink frames so the LONGER side is at most this many pixels (aspect ratio kept):
+  # landscape 1920x1080 -> 960x540, portrait 1080x1920 -> 540x960.
+  # Smaller frames are never enlarged. Use null to keep the original size.
+  max_frame_size: 960
+  # true  -> recorded video plays at its real speed (keeps video in sync with live audio)
+  # false -> frames are processed as fast as the computer can (good for offline tests)
+  realtime_playback: true
+  # Restart a recorded video when it ends (useful for long demos)
+  loop_video: false
+  # Some webcams report 0 FPS; use this value instead
+  webcam_fallback_fps: 30
+  # Give up after this many failed reads in a row (e.g. webcam unplugged)
+  max_consecutive_read_failures: 30
+  window_name: "SmartCity Sentinel - Video"
+
+# --------------------------------------------------------------------------
+# Module 2 - Vehicle detection (pretrained YOLO, COCO classes)
+# --------------------------------------------------------------------------
+detection:
+  # Weights file inside paths.models_dir (downloaded automatically on first use).
+  # Other options: yolo11s.pt (more accurate, slower), yolo26n.pt, yolov8n.pt
+  model_name: "yolo11n.pt"
+  # Detections below this confidence are discarded.
+  # PROTOTYPE VALUE - lower = more vehicles found but more false boxes.
+  confidence_threshold: 0.35
+  # Non-Maximum Suppression overlap limit: boxes overlapping more than this are merged
+  iou_threshold: 0.5
+  # Network input size in pixels (multiple of 32). Larger = better on small vehicles, slower.
+  image_size: 640
+  # COCO class names to keep (must exactly match the model's label names)
+  vehicle_classes: ["car", "motorcycle", "bus", "truck"]
+  # Also detect pedestrians (not used for traffic counts)
+  include_person: false
+
+# --------------------------------------------------------------------------
+# Module 3 - Vehicle tracking and counting
+# --------------------------------------------------------------------------
+tracking:
+  # ByteTrack settings file (relative to project root)
+  tracker_config: "config/bytetrack.yaml"
+  # Confidence passed to YOLO while tracking. Kept LOW on purpose (= track_low_thresh)
+  # so ByteTrack's second stage can use weak boxes to keep partly hidden vehicles tracked.
+  # New vehicle IDs still need new_track_thresh (bytetrack.yaml).
+  detection_confidence: 0.1
+  # A vehicle is counted only after its ID was seen in at least this many frames.
+  # PROTOTYPE VALUE - filters short-lived false/fragmented tracks. On the intersection
+  # clip the unique count was very sensitive to this (3 -> 232, 10 -> 159, 30 -> 121),
+  # while line crossings stayed at 33-34. Calibrate against a manual count (Module 14).
+  min_frames_to_count: 10
+  # Forget a track's details after it has not been seen for this many frames
+  # (its count is kept). Should be >= ByteTrack's track_buffer.
+  forget_after_frames: 60
+  # Optional virtual counting line, as fractions of frame width/height (0.0 - 1.0):
+  # [[x1, y1], [x2, y2]]. Set to null to disable line-crossing counting.
+  # Placed low in the frame where vehicles are large and reliably detected.
+  # PROTOTYPE POSITION for the intersection clip - adjust per video.
+  counting_line: [[0.0, 0.75], [1.0, 0.75]]
+
+# --------------------------------------------------------------------------
+# Module 4 - Traffic analysis (density + LOW / MEDIUM / HIGH level)
+# --------------------------------------------------------------------------
+traffic:
+  # Traffic "load" = vehicles visible now, weighted by how much road they occupy.
+  # PROTOTYPE WEIGHTS inspired by the Passenger Car Unit (PCU) idea - NOT taken
+  # from an official standard. Classes not listed count as 1.0.
+  class_weights:
+    car: 1.0
+    motorcycle: 0.5
+    bus: 2.5
+    truck: 2.5
+  # Density = average load over this many seconds of VIDEO time (smooths flicker)
+  density_window_seconds: 3.0
+  # PROTOTYPE THRESHOLDS on density (weighted vehicles in view), camera-specific:
+  #   density <  medium -> LOW,  medium <= density < high -> MEDIUM,  density >= high -> HIGH
+  # Calibrate per camera with: python scripts/run_traffic_analysis.py --source <clip>
+  # (it prints the measured density percentiles).
+  level_thresholds:
+    medium: 8.0
+    high: 15.0
+  # Flow rate = line crossings in the last N seconds, expressed per minute
+  flow_window_seconds: 60.0
+
+# --------------------------------------------------------------------------
+# Module 5 - Lane / region analysis (manually defined regions)
+# --------------------------------------------------------------------------
+lanes:
+  # Point of the box used to decide the lane:
+  #   bottom_center -> where the wheels touch the road (recommended for angled cameras)
+  #   center        -> centre of the box
+  assignment_point: "bottom_center"
+  density_window_seconds: 3.0
+  # PROTOTYPE per-lane thresholds on lane density (size-weighted vehicles in the lane).
+  # Lower than the whole-road thresholds because a lane holds fewer vehicles.
+  # Calibrate with: python scripts/run_lane_analysis.py --source <clip> (prints percentiles)
+  level_thresholds:
+    medium: 3.0
+    high: 6.0
+  # Profile used when a video has no profile of its own (null = no lane analysis)
+  default_profile: null
+  # One profile per video FILE NAME (or "webcam"). Polygons are [x, y] fractions of the
+  # frame (0.0 - 1.0), listed around the region. Create/edit with:
+  #   python scripts/define_lanes.py --source <clip>
+  # These are prototype regions = approach zones drawn by eye, not surveyed lane markings.
+  profiles:
+    "13997539_1080_1920_30fps.mp4":       # intersection, traffic flows towards the camera
+      - name: "Lane 1"
+        polygon: [[0.00, 0.62], [0.40, 0.62], [0.33, 1.00], [0.00, 1.00]]
+      - name: "Lane 2"
+        polygon: [[0.40, 0.62], [0.70, 0.62], [0.75, 1.00], [0.33, 1.00]]
+      - name: "Lane 3"
+        polygon: [[0.70, 0.62], [1.00, 0.62], [1.00, 1.00], [0.75, 1.00]]
+    "16922729_1920_1080_30fps.mp4":       # Dhaka road, angled view
+      - name: "Lane 1"
+        polygon: [[0.00, 0.58], [0.24, 0.44], [0.33, 0.44], [0.22, 1.00], [0.00, 1.00]]
+      - name: "Lane 2"
+        polygon: [[0.33, 0.44], [0.47, 0.44], [0.62, 1.00], [0.22, 1.00]]
+      - name: "Lane 3"
+        polygon: [[0.47, 0.44], [0.62, 0.44], [0.98, 1.00], [0.62, 1.00]]
+
+# --------------------------------------------------------------------------
+# Module 6 - Audio input (microphone or recorded file)
+# --------------------------------------------------------------------------
+audio:
+  # "mic" for the live microphone, or an audio file path (WAV / MP3 / FLAC / OGG)
+  source: "mic"
+  # Audio is converted to mono at this rate (most Hugging Face audio models use 16 kHz;
+  # confirmed against the chosen model in Module 7)
+  sample_rate: 16000
+  # Each window analysed by the siren model covers window_seconds of audio;
+  # a new window starts every hop_seconds (2.0 / 1.0 = 50% overlap, a decision each second).
+  # PROTOTYPE VALUES - may be tuned for the model in Module 7.
+  window_seconds: 2.0
+  hop_seconds: 1.0
+  # Microphone: null = Windows default input device; or a device index / name
+  # (list them with: python scripts/run_audio_input.py --list-devices)
+  microphone_device: null
+  # Recorded files: play at real speed (keeps audio in sync with video) and optionally loop
+  realtime_playback: true
+  loop_audio: false
+  # Windows quieter than this are reported as "quiet" (display only, not used for detection)
+  silence_threshold_dbfs: -50.0
+
+# --------------------------------------------------------------------------
+# Module 7 - Siren classification (pretrained Hugging Face model)
+# --------------------------------------------------------------------------
+siren:
+  # Audio Spectrogram Transformer fine-tuned on AudioSet (527 sound classes)
+  model_name: "MIT/ast-finetuned-audioset-10-10-0.4593"
+  # AudioSet labels that count as an emergency siren (names exactly as in the model's config).
+  # Siren score = highest probability among these labels.
+  siren_labels:
+    - "Siren"
+    - "Civil defense siren"
+    - "Emergency vehicle"
+    - "Police car (siren)"
+    - "Ambulance (siren)"
+    - "Fire engine, fire truck (siren)"
+  # Labels used to name the siren type (reported only when a siren is detected)
+  type_labels:
+    "Ambulance (siren)": "Ambulance"
+    "Police car (siren)": "Police"
+    "Fire engine, fire truck (siren)": "Fire truck"
+  # A window is "Emergency Siren" if siren score >= this value.
+  # Chosen on ESC-50 folds 1-2 (best balanced accuracy); measured on folds 3-5 with 2 s
+  # windows: accuracy 0.985, siren recall 0.958, 0 false positives in 177 windows.
+  # Re-check with real street/microphone audio (scripts/evaluate_siren_classifier.py).
+  detection_threshold: 0.15
+
+# --------------------------------------------------------------------------
+# Module 8 - Audio temporal smoothing (siren event confirmation)
+# --------------------------------------------------------------------------
+smoothing:
+  # Remember the decisions of the last N audio windows (1 window per hop = 1 s)
+  history_windows: 5
+  # Emergency becomes ACTIVE when at least this many of the remembered windows are siren.
+  # "3 of 5" (not "n in a row") still activates on a slow wail siren that alternates
+  # siren / other between windows (siren,other,siren,other,siren = 3 of 5).
+  # PROTOTYPE VALUE.
+  windows_to_activate: 3
+  # An ACTIVE emergency ENDS only after this many non-siren windows IN A ROW (hysteresis:
+  # harder to switch off than to stay on, so a siren briefly masked by noise does not cancel it).
+  # PROTOTYPE VALUE. 4 was measured to split a real siren with a 3 s gap into two events
+  # (one model miss + 2-3 quiet windows from the gap); 6 bridges it. Cost: the emergency
+  # ends ~6 s after the siren stops (safe direction for emergency priority).
+  quiet_windows_to_end: 6
+
+# --------------------------------------------------------------------------
+# Module 9 - Multimodal decision engine (explainable rules)
+# --------------------------------------------------------------------------
+decision:
+  # Lane to analyse when an emergency is confirmed (a lane name from lanes.profiles,
+  # e.g. "Lane 1"). null = target the MOST CONGESTED lane (highest lane density).
+  # The system cannot know where the emergency vehicle is (single microphone), and every
+  # recommendation says which of these two rules was used.
+  emergency_lane: null
+
+# --------------------------------------------------------------------------
+# Module 10 - Emergency priority state machine
+# --------------------------------------------------------------------------
+priority:
+  # After the siren is confirmed, watch lane densities for this long before choosing
+  # the target lane (average instead of a single noisy snapshot)
+  route_analysis_seconds: 2.0
+  # Once chosen, the target lane is HELD. It is switched only if another lane's density
+  # is at least this much higher ...  (PROTOTYPE VALUE, lane-density units)
+  target_switch_margin: 2.0
+  # ... continuously for this long (PROTOTYPE VALUE). A designated lane is never switched.
+  target_switch_hold_seconds: 3.0
+  # After the emergency ends, show "returning to normal" for this long
+  return_to_normal_seconds: 5.0

@@ -1,0 +1,1 @@
+"""SmartCity Sentinel application package."""

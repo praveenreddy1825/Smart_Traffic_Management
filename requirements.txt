@@ -1,0 +1,26 @@
+# SmartCity Sentinel - Python dependencies (Python 3.12)
+#
+# PyTorch is installed SEPARATELY first (GPU build), see README "Installation":
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+# If you have no NVIDIA GPU, plain `pip install torch torchvision` gives the CPU build.
+
+# Core / config
+numpy>=1.26,<3
+pyyaml>=6.0
+
+# Video + vehicle detection
+opencv-python>=4.9
+ultralytics>=8.3          # YOLO models (also provides ByteTrack tracker)
+lap>=0.5.12               # Hungarian-algorithm solver required by ByteTrack
+
+# Audio + Hugging Face audio classification
+sounddevice>=0.4.6        # live microphone input
+soundfile>=0.12           # read/write WAV files
+scipy>=1.11               # resampling audio to the model's sample rate
+transformers>=4.40        # Hugging Face pretrained models
+
+# Dashboard
+streamlit>=1.35
+
+# Testing
+pytest>=8.0

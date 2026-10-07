@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables / secrets
+.env
+
+# Logs
+logs/
+*.log
+
+# Downloaded model weights and Hugging Face cache (re-downloadable, large)
+models/*
+!models/.gitkeep
+*.pt
+
+# Data files (videos/audio are large; keep the folders only)
+data/videos/*
+data/audio/*
+data/test/*
+!data/videos/.gitkeep
+!data/audio/.gitkeep
+!data/test/.gitkeep
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

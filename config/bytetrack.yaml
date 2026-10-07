@@ -1,0 +1,18 @@
+# ByteTrack tracker settings (used by Module 3).
+# Values are the Ultralytics defaults; copied here so all settings live in config/.
+# Docs: https://docs.ultralytics.com/modes/track
+
+tracker_type: bytetrack
+# Stage 1: confident detections (>= this) are matched to existing tracks first
+track_high_thresh: 0.25
+# Stage 2: weak detections (between this and track_high_thresh) can still continue
+# an existing track - this keeps IDs alive when a vehicle is partly hidden
+track_low_thresh: 0.1
+# An unmatched detection starts a NEW vehicle ID only if its confidence >= this
+new_track_thresh: 0.25
+# Frames a lost track is remembered (30 frames = 1 s at 30 FPS) before its ID is dropped
+track_buffer: 30
+# Matching threshold on the IoU-based cost (higher = more permissive matching)
+match_thresh: 0.8
+# Combine detection confidence with box overlap when matching
+fuse_score: True
