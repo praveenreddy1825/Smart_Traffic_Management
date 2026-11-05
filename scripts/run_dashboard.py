@@ -9,6 +9,7 @@ Usage:
 
 import argparse
 import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -23,10 +24,25 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 import uvicorn
-from app.dashboard.server import app
+from app.dashboard.server import app, pipeline
+
+
+def sigint_handler(sig, frame):
+    print("\n[INFO] Interrupt signal received, stopping pipeline and exiting cleanly...")
+    try:
+        pipeline.stop()
+    except Exception:
+        pass
+    sys.exit(0)
 
 
 def main():
+    try:
+        signal.signal(signal.SIGINT, sigint_handler)
+        signal.signal(signal.SIGTERM, sigint_handler)
+    except Exception:
+        pass
+
     parser = argparse.ArgumentParser(description="Run SmartCity Sentinel Dashboard")
     parser.add_argument("--host", default="127.0.0.1", help="Host address to bind to (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=8000, help="Port to run server on (default: 8000)")
@@ -37,7 +53,19 @@ def main():
     print(f" Dashboard URL: http://127.0.0.1:{args.port}")
     print("=" * 70 + "\n")
 
-    uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+    config = uvicorn.Config(
+        app,
+        host=args.host,
+        port=args.port,
+        log_level="info",
+        timeout_graceful_shutdown=1,
+        timeout_keep_alive=3,
+    )
+    server = uvicorn.Server(config)
+    try:
+        server.run()
+    finally:
+        pipeline.stop()
 
 
 if __name__ == "__main__":

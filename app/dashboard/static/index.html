@@ -1517,11 +1517,6 @@
             document.getElementById('osd-audio-tag').textContent = found.has_audio ? '16 kHz AUDIO DEMUXED' : 'AUDIO: MUTE';
             document.getElementById('osd-audio-tag').style.color = found.has_audio ? '#10b981' : '#64748b';
           }
-          // Refresh video feed stream connection immediately
-          const feedImg = document.querySelector('.video-viewport img');
-          if (feedImg) {
-            feedImg.src = '/video_feed?t=' + Date.now();
-          }
           populateModalGrids();
           closeFolderModal();
         }
@@ -1530,13 +1525,18 @@
       }
     }
 
-    // Auto-reconnect video feed if browser stream connection drops
+    // Safe debounced reconnect if browser connection ever drops
+    let lastReconnectTime = 0;
     const videoStreamImg = document.querySelector('.video-viewport img');
     if (videoStreamImg) {
       videoStreamImg.onerror = function() {
-        setTimeout(() => {
-          videoStreamImg.src = '/video_feed?t=' + Date.now();
-        }, 400);
+        const now = Date.now();
+        if (now - lastReconnectTime > 3000) {
+          lastReconnectTime = now;
+          setTimeout(() => {
+            videoStreamImg.src = '/video_feed?t=' + Date.now();
+          }, 1000);
+        }
       };
     }
 
@@ -1657,14 +1657,21 @@
       } catch (err) {}
     }
 
-    // Live Telemetry Poller (~100ms)
+    // Live Telemetry Poller (4Hz, non-overlapping)
+    let isPolling = false;
     async function pollStatus() {
+      if (isPolling) return;
+      isPolling = true;
       try {
         const res = await fetch('/api/status');
-        if (!res.ok) return;
-        const data = await res.json();
-        updateUI(data);
-      } catch (err) {}
+        if (res.ok) {
+          const data = await res.json();
+          updateUI(data);
+        }
+      } catch (err) {
+      } finally {
+        isPolling = false;
+      }
     }
 
     let lastKnownEventCount = 0;
@@ -1829,7 +1836,7 @@
     }
 
     loadScenarios();
-    setInterval(pollStatus, 120);
+    setInterval(pollStatus, 250);
     pollStatus();
   </script>
 </body>

@@ -20,7 +20,7 @@ from typing import Dict, List, Optional
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -89,6 +89,7 @@ class PipelineManager:
     def __init__(self, config: dict):
         self.config = config
         self.running = False
+        self.stop_requested = threading.Event()
         self.thread: Optional[threading.Thread] = None
         self.lock = threading.Lock()
         self.condition = threading.Condition(self.lock)
@@ -200,11 +201,15 @@ class PipelineManager:
         logger.info("Presentation pipeline worker thread started.")
 
     def stop(self):
+        self.stop_requested.set()
         self.running = False
+        with self.condition:
+            self.condition.notify_all()
         if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=2.0)
-        if self.scenario_manager.active_stream:
-            self.scenario_manager.active_stream.close()
+            self.thread.join(timeout=1.0)
+        with self.lock:
+            if self.scenario_manager.active_stream:
+                self.scenario_manager.active_stream.close()
         logger.info("Presentation pipeline worker thread stopped.")
 
     def _run_loop(self):
@@ -483,24 +488,38 @@ def index_page():
     return HTMLResponse(index_file.read_text(encoding="utf-8"))
 
 
-def mjpeg_generator():
-    """Yield MJPEG boundary stream for the active scenario player."""
-    boundary = b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
-    last_counter = -1
-    while pipeline.running:
-        with pipeline.condition:
-            while pipeline.running and pipeline.frame_counter == last_counter:
-                pipeline.condition.wait(timeout=0.08)
-            frame_bytes = pipeline.latest_frame
-            last_counter = pipeline.frame_counter
-
-        if frame_bytes:
-            yield boundary + frame_bytes + b"\r\n"
-
-
 @app.get("/video_feed")
-def video_feed():
-    return StreamingResponse(mjpeg_generator(), media_type="multipart/x-mixed-replace; boundary=frame")
+async def video_feed(request: Request):
+    """Yield MJPEG boundary stream asynchronously with instant disconnect and graceful shutdown."""
+    async def frame_stream():
+        last_counter = -1
+        try:
+            while pipeline.running and not pipeline.stop_requested.is_set():
+                if await request.is_disconnected():
+                    break
+
+                with pipeline.condition:
+                    frame_bytes = pipeline.latest_frame
+                    current_counter = pipeline.frame_counter
+
+                if current_counter != last_counter and frame_bytes:
+                    last_counter = current_counter
+                    yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
+
+                await asyncio.sleep(0.015)
+        except (asyncio.CancelledError, GeneratorExit):
+            pass
+
+    return StreamingResponse(
+        frame_stream(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "Connection": "close",
+        },
+    )
 
 
 @app.get("/api/status")
