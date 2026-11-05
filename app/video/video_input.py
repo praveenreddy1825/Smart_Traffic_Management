@@ -163,11 +163,27 @@ class VideoInput:
 
     # ------------------------------------------------------------------ reading
 
-    def read(self):
-        """Return the next VideoFrame, or None when the stream has ended."""
+    def read(self, stride: int = 1):
+        """Return the next VideoFrame, or None when the stream has ended.
+
+        If stride > 1 and reading from a video file, intermediate frames are
+        quickly grabbed without decoding to advance playback at real-time speed.
+        """
         capture = self._capture
         if capture is None or not capture.isOpened():
             raise VideoSourceError("Video source is not open - call open() first")
+
+        # Fast-forward intermediate frames if stride > 1
+        if stride > 1 and not self.is_webcam:
+            for _ in range(stride - 1):
+                grab_ok = capture.grab()
+                if not grab_ok:
+                    if self.loop_video and self._frames_read_this_pass > 0:
+                        capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        self._frames_read_this_pass = 0
+                    break
+                self._next_frame_index += 1
+                self._frames_read_this_pass += 1
 
         consecutive_failures = 0
         while True:
@@ -248,5 +264,5 @@ class VideoInput:
         new_width, new_height = self._resized_size(width, height)
         if (new_width, new_height) == (width, height):
             return image
-        # INTER_AREA gives the best quality when shrinking an image
-        return cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+        # INTER_LINEAR is much faster than INTER_AREA for real-time video streaming
+        return cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_LINEAR)

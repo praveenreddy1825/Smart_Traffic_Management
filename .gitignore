@@ -20,12 +20,18 @@ models/*
 *.pt
 
 # Data files (videos/audio are large; keep the folders only)
-data/videos/*
-data/audio/*
-data/test/*
-!data/videos/.gitkeep
-!data/audio/.gitkeep
-!data/test/.gitkeep
+data/videos/**
+!data/videos/
+!data/videos/**/
+!data/videos/**/.gitkeep
+data/audio/**
+!data/audio/
+!data/audio/**/
+!data/audio/**/.gitkeep
+data/test/**
+!data/test/
+!data/test/**/
+!data/test/**/.gitkeep
 
 # Editor / OS
 .vscode/

@@ -43,7 +43,7 @@ device: "auto"
 video:
   # Either a video file path (relative to project root) or a webcam index (0, 1, ...)
   # Main demo clip: fixed camera at a city intersection (Pexels 13997539)
-  source: "data/videos/13997539_1080_1920_30fps.mp4"
+  source: "data/videos/north/12937229_960_540_30fps.mp4"
   # Shrink frames so the LONGER side is at most this many pixels (aspect ratio kept):
   # landscape 1920x1080 -> 960x540, portrait 1080x1920 -> 540x960.
   # Smaller frames are never enlarged. Use null to keep the original size.
@@ -68,15 +68,15 @@ detection:
   model_name: "yolo11n.pt"
   # Detections below this confidence are discarded.
   # PROTOTYPE VALUE - lower = more vehicles found but more false boxes.
-  confidence_threshold: 0.35
+  confidence_threshold: 0.20
   # Non-Maximum Suppression overlap limit: boxes overlapping more than this are merged
   iou_threshold: 0.5
   # Network input size in pixels (multiple of 32). Larger = better on small vehicles, slower.
   image_size: 640
   # COCO class names to keep (must exactly match the model's label names)
-  vehicle_classes: ["car", "motorcycle", "bus", "truck"]
+  vehicle_classes: ["car", "motorcycle", "bus", "truck", "bicycle"]
   # Also detect pedestrians (not used for traffic counts)
-  include_person: false
+  include_person: true
 
 # --------------------------------------------------------------------------
 # Module 3 - Vehicle tracking and counting
@@ -87,12 +87,12 @@ tracking:
   # Confidence passed to YOLO while tracking. Kept LOW on purpose (= track_low_thresh)
   # so ByteTrack's second stage can use weak boxes to keep partly hidden vehicles tracked.
   # New vehicle IDs still need new_track_thresh (bytetrack.yaml).
-  detection_confidence: 0.1
+  detection_confidence: 0.15
   # A vehicle is counted only after its ID was seen in at least this many frames.
   # PROTOTYPE VALUE - filters short-lived false/fragmented tracks. On the intersection
   # clip the unique count was very sensitive to this (3 -> 232, 10 -> 159, 30 -> 121),
   # while line crossings stayed at 33-34. Calibrate against a manual count (Module 14).
-  min_frames_to_count: 10
+  min_frames_to_count: 5
   # Forget a track's details after it has not been seen for this many frames
   # (its count is kept). Should be >= ByteTrack's track_buffer.
   forget_after_frames: 60
@@ -112,6 +112,7 @@ traffic:
   class_weights:
     car: 1.0
     motorcycle: 0.5
+    bicycle: 0.5
     bus: 2.5
     truck: 2.5
   # Density = average load over this many seconds of VIDEO time (smooths flicker)
@@ -127,41 +128,16 @@ traffic:
   flow_window_seconds: 60.0
 
 # --------------------------------------------------------------------------
-# Module 5 - Lane / region analysis (manually defined regions)
+# Module 5 - Crowd & Pedestrian Detection & Safety Module
 # --------------------------------------------------------------------------
-lanes:
-  # Point of the box used to decide the lane:
-  #   bottom_center -> where the wheels touch the road (recommended for angled cameras)
-  #   center        -> centre of the box
-  assignment_point: "bottom_center"
-  density_window_seconds: 3.0
-  # PROTOTYPE per-lane thresholds on lane density (size-weighted vehicles in the lane).
-  # Lower than the whole-road thresholds because a lane holds fewer vehicles.
-  # Calibrate with: python scripts/run_lane_analysis.py --source <clip> (prints percentiles)
-  level_thresholds:
-    medium: 3.0
-    high: 6.0
-  # Profile used when a video has no profile of its own (null = no lane analysis)
-  default_profile: null
-  # One profile per video FILE NAME (or "webcam"). Polygons are [x, y] fractions of the
-  # frame (0.0 - 1.0), listed around the region. Create/edit with:
-  #   python scripts/define_lanes.py --source <clip>
-  # These are prototype regions = approach zones drawn by eye, not surveyed lane markings.
-  profiles:
-    "13997539_1080_1920_30fps.mp4":       # intersection, traffic flows towards the camera
-      - name: "Lane 1"
-        polygon: [[0.00, 0.62], [0.40, 0.62], [0.33, 1.00], [0.00, 1.00]]
-      - name: "Lane 2"
-        polygon: [[0.40, 0.62], [0.70, 0.62], [0.75, 1.00], [0.33, 1.00]]
-      - name: "Lane 3"
-        polygon: [[0.70, 0.62], [1.00, 0.62], [1.00, 1.00], [0.75, 1.00]]
-    "16922729_1920_1080_30fps.mp4":       # Dhaka road, angled view
-      - name: "Lane 1"
-        polygon: [[0.00, 0.58], [0.24, 0.44], [0.33, 0.44], [0.22, 1.00], [0.00, 1.00]]
-      - name: "Lane 2"
-        polygon: [[0.33, 0.44], [0.47, 0.44], [0.62, 1.00], [0.22, 1.00]]
-      - name: "Lane 3"
-        polygon: [[0.47, 0.44], [0.62, 0.44], [0.98, 1.00], [0.62, 1.00]]
+crowd:
+  enabled: true
+  sparse_threshold: 4
+  moderate_threshold: 10
+  crowded_threshold: 20
+  cluster_distance_pixels: 75.0
+  min_frames_to_count: 3
+  forget_after_frames: 45
 
 # --------------------------------------------------------------------------
 # Module 6 - Audio input (microphone or recorded file)
@@ -254,3 +230,28 @@ priority:
   target_switch_hold_seconds: 3.0
   # After the emergency ends, show "returning to normal" for this long
   return_to_normal_seconds: 5.0
+
+# --------------------------------------------------------------------------
+# Module 11 - Four-Way Intersection & Approaches
+# --------------------------------------------------------------------------
+intersection:
+  name: "City Central 4-Way Intersection"
+  approaches:
+    north:
+      name: "North Approach"
+      video_source: "data/videos/north"
+      counting_line: [[0.0, 0.75], [1.0, 0.75]]
+    south:
+      name: "South Approach"
+      video_source: "data/videos/south"
+      counting_line: null
+    east:
+      name: "East Approach"
+      video_source: "data/videos/east"
+      counting_line: null
+    west:
+      name: "West Approach"
+      video_source: "data/videos/west"
+      counting_line: null
+
+

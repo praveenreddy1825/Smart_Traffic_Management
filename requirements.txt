@@ -19,8 +19,11 @@ soundfile>=0.12           # read/write WAV files
 scipy>=1.11               # resampling audio to the model's sample rate
 transformers>=4.40        # Hugging Face pretrained models
 
-# Dashboard
-streamlit>=1.35
+# Web Dashboard & Streaming API
+fastapi>=0.110.0
+uvicorn>=0.28.0
+python-multipart>=0.0.9
+av>=12.0.0
 
 # Testing
 pytest>=8.0

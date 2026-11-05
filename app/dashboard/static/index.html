@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartCity Sentinel — Adaptive Traffic & Crowd Presentation HUD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080c14;
+      --card-bg: #101726;
+      --card-border: #1e293b;
+      --card-hover: #1e293f;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --status-green: #10b981;
+      --status-yellow: #f59e0b;
+      --status-red: #ef4444;
+      --status-purple: #8b5cf6;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      background: rgba(16, 23, 38, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      font-size: 1.8rem;
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+      font-weight: 500;
+    }
+
+    .header-pills {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--status-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--status-green);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Clean Folder Navigation Bar */
+    .folder-bar {
+      background: #0d1424;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.55rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .folder-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .folder-library-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .folder-library-btn:hover {
+      background: #273549;
+      border-color: var(--accent-cyan);
+    }
+
+    .folder-tabs {
+      display: flex;
+      gap: 0.3rem;
+      background: #080c14;
+      padding: 0.2rem;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    .folder-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .folder-tab:hover {
+      color: #fff;
+      background: #141d2f;
+    }
+
+    .folder-tab.active {
+      background: #1e293b;
+      color: #fff;
+    }
+
+    .folder-tab.active#tab-vehicles { color: #34d399; }
+    .folder-tab.active#tab-crowd { color: #60a5fa; }
+    .folder-tab.active#tab-emergency { color: #f87171; }
+
+    .tab-badge {
+      font-size: 0.68rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 9999px;
+      background: #334155;
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+
+    /* Sub-pills for current folder */
+    .folder-clips-pills {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      overflow-x: auto;
+    }
+
+    .clip-pill {
+      background: #141c2c;
+      border: 1px solid #233148;
+      color: var(--text-muted);
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s;
+    }
+
+    .clip-pill:hover {
+      background: #1c273d;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+
+    .clip-pill.active {
+      background: rgba(6, 182, 212, 0.18);
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    }
+
+    .upload-quick-btn {
+      background: transparent;
+      border: 1px dashed #475569;
+      color: var(--text-muted);
+      padding: 0.38rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .upload-quick-btn:hover {
+      border-color: var(--accent-cyan);
+      color: #fff;
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+    /* Main Grid */
+    main {
+      padding: 1rem 1.5rem;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 1.25rem;
+      flex: 1;
+    }
+
+    /* Video Section */
+    .video-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .video-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .video-header {
+      padding: 0.75rem 1rem;
+      background: #141d30;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .video-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .video-feed-wrapper {
+      position: relative;
+      background: #000;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-feed-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .controls-bar {
+      padding: 0.6rem 1rem;
+      background: #0d1424;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--card-border);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .btn-group-inline {
+      display: flex;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .ctrl-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text-muted);
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ctrl-btn:hover {
+      background: #273549;
+      color: #fff;
+    }
+
+    .ctrl-btn.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+
+    /* Decision Banner */
+    .decision-banner {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .decision-banner.normal {
+      border-left: 6px solid var(--status-green);
+    }
+
+    .decision-banner.emergency {
+      border-left: 6px solid var(--status-red);
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.15), var(--card-bg));
+      animation: alert-pulse 1.5s infinite;
+    }
+
+    .decision-banner.pedestrian {
+      border-left: 6px solid var(--accent-blue);
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), var(--card-bg));
+    }
+
+    .decision-banner.congestion {
+      border-left: 6px solid var(--status-yellow);
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), var(--card-bg));
+    }
+
+    @keyframes alert-pulse {
+      0%, 100% { border-color: var(--status-red); }
+      50% { border-color: #f87171; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+    }
+
+    .signal-light-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: #000;
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+
+    .signal-lamp {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #222;
+    }
+
+    .signal-lamp.red.on { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+    .signal-lamp.yellow.on { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+    .signal-lamp.green.on { background: #10b981; box-shadow: 0 0 10px #10b981; }
+
+    .banner-text-box {
+      flex: 1;
+    }
+
+    .banner-badge {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 0.25rem;
+    }
+
+    .badge-normal { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-emergency { background: rgba(239, 68, 68, 0.25); color: #f87171; }
+    .badge-pedestrian { background: rgba(59, 130, 246, 0.25); color: #60a5fa; }
+    .badge-congestion { background: rgba(245, 158, 11, 0.25); color: #fbbf24; }
+
+    .banner-headline {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .banner-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .phase-timer-pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .phase-timer-val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+    }
+
+    .phase-timer-lbl {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Right Telemetry Column */
+    .telemetry-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .telemetry-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .telemetry-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.4rem;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+    }
+
+    .stat-box {
+      background: #141c2b;
+      border: 1px solid #1f2b3f;
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: #fff;
+    }
+
+    .stat-lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Progress & Gauges */
+    .gauge-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .gauge-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .progress-bar-bg {
+      background: #1e293b;
+      height: 8px;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.25s ease;
+    }
+
+    .fill-siren { background: linear-gradient(90deg, #3b82f6, #f59e0b, #ef4444); }
+    .fill-crowd { background: linear-gradient(90deg, #10b981, #3b82f6, #ef4444); }
+
+    /* Class Chips */
+    .chips-group {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 0.72rem;
+      background: #141d2f;
+      border: 1px solid #233148;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+    }
+
+    .cat-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .cat-vehicles { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .cat-crowd { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .cat-emergency { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .cat-upload { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+
+    /* Modal for Folder Explorer */
+    .folder-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .folder-modal-overlay.open {
+      display: flex;
+    }
+
+    .folder-modal {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      max-width: 860px;
+      width: 100%;
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    }
+
+    .modal-header {
+      padding: 1rem 1.25rem;
+      background: #141d30;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .close-modal-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.6rem;
+      cursor: pointer;
+    }
+    .close-modal-btn:hover { color: #fff; }
+
+    .modal-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .folder-section {
+      background: #0d1424;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.85rem;
+    }
+
+    .folder-section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      font-family: var(--font-mono);
+    }
+
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.6rem;
+    }
+
+    .folder-card {
+      background: #141c2c;
+      border: 1px solid #233148;
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      transition: all 0.15s;
+    }
+
+    .folder-card:hover {
+      border-color: var(--accent-cyan);
+      background: #1c273d;
+      transform: translateY(-2px);
+    }
+
+    .folder-card.active {
+      border-color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.18);
+    }
+
+    /* Hidden file input */
+    #file-upload-input { display: none; }
+
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Global Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🚦</div>
+      <div>
+        <h1>SmartCity Sentinel</h1>
+        <span>Adaptive Multimodal Traffic & Crowd Operations</span>
+      </div>
+    </div>
+    <div class="header-pills">
+      <div class="pill">
+        <div class="live-dot"></div>
+        <span>LIVE PIPELINE</span>
+      </div>
+      <div class="pill" id="pill-mode">MODE: AUTO</div>
+      <div class="pill" id="pill-fps">FPS: --</div>
+      <div class="pill" id="pill-device">DEVICE: --</div>
+      <div class="pill" id="pill-clock">00:00:00</div>
+    </div>
+  </header>
+
+  <!-- Clean Folder Navigation Bar -->
+  <div class="folder-bar">
+    <div class="folder-nav-left">
+      <button class="folder-library-btn" onclick="openFolderModal()">
+        <span>📁</span>
+        <span>Scenario Folders</span>
+      </button>
+
+      <!-- Category Tabs (Architecture Folders) -->
+      <div class="folder-tabs">
+        <button class="folder-tab active" id="tab-vehicles" onclick="switchFolder('vehicles')">
+          <span>🚗 Vehicles</span>
+          <span class="tab-badge" id="badge-cnt-vehicles">0</span>
+        </button>
+        <button class="folder-tab" id="tab-crowd" onclick="switchFolder('crowd')">
+          <span>👥 Crowd</span>
+          <span class="tab-badge" id="badge-cnt-crowd">0</span>
+        </button>
+        <button class="folder-tab" id="tab-emergency" onclick="switchFolder('emergency')">
+          <span>🚨 Emergency</span>
+          <span class="tab-badge" id="badge-cnt-emergency">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Folder Clips (Horizontal Inline Pills) -->
+    <div class="folder-clips-pills" id="active-folder-clips">
+      <!-- Populated dynamically based on active folder tab -->
+    </div>
+
+    <div>
+      <button class="upload-quick-btn" onclick="document.getElementById('file-upload-input').click()">
+        <span>➕ Upload Clip</span>
+      </button>
+    </div>
+  </div>
+
+  <input type="file" id="file-upload-input" accept=".mp4,.avi,.mov,.mkv" onchange="handleFileUpload(event)">
+
+  <!-- Main Presentation Grid -->
+  <main>
+
+    <!-- Left: Hero Video Player & Decision Banner -->
+    <div class="video-section">
+
+      <!-- Decision Banner -->
+      <div class="decision-banner normal" id="decision-banner">
+        <div class="signal-light-box">
+          <div class="signal-lamp red" id="lamp-red"></div>
+          <div class="signal-lamp yellow" id="lamp-yellow"></div>
+          <div class="signal-lamp green on" id="lamp-green"></div>
+        </div>
+        <div class="banner-text-box">
+          <span class="banner-badge badge-normal" id="banner-badge">NORMAL FLOW</span>
+          <div class="banner-headline" id="banner-headline">Standard Adaptive Cycle Active</div>
+          <div class="banner-desc" id="banner-desc">Analyzing video feed and audio spectrogram for real-time dispatch.</div>
+        </div>
+        <div class="phase-timer-pill">
+          <div class="phase-timer-val" id="phase-timer-val">15s</div>
+          <div class="phase-timer-lbl">Phase Duration</div>
+        </div>
+      </div>
+
+      <!-- Hero Video Player -->
+      <div class="video-card">
+        <div class="video-header">
+          <div class="video-title-group">
+            <span style="font-size: 1rem;">📍</span>
+            <strong id="active-scenario-name" style="font-size: 0.95rem;">Active Scenario Stream</strong>
+          </div>
+          <div class="btn-group-inline">
+            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">FOCUS:</span>
+            <button class="ctrl-btn active" id="btn-mode-auto" onclick="setAnalysisMode('auto')">Auto</button>
+            <button class="ctrl-btn" id="btn-mode-veh" onclick="setAnalysisMode('vehicle')">🚗 Vehicles</button>
+            <button class="ctrl-btn" id="btn-mode-crowd" onclick="setAnalysisMode('crowd')">👥 Crowd</button>
+            <button class="ctrl-btn" id="btn-mode-hybrid" onclick="setAnalysisMode('hybrid')">🔄 Hybrid</button>
+          </div>
+        </div>
+
+        <div class="video-feed-wrapper">
+          <img src="/video_feed" alt="Real-Time Annotated AI Stream">
+        </div>
+
+        <div class="controls-bar">
+          <div class="btn-group-inline">
+            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">SPEED:</span>
+            <button class="ctrl-btn active" id="btn-spd-1" onclick="setSpeed(1)">1.0x Real</button>
+            <button class="ctrl-btn" id="btn-spd-2" onclick="setSpeed(2)">1.5x</button>
+            <button class="ctrl-btn" id="btn-spd-3" onclick="setSpeed(3)">2.0x</button>
+          </div>
+          <div class="btn-group-inline">
+            <button class="ctrl-btn" style="background:#dc2626; color:#fff;" onclick="injectEmergency()">🚨 Inject Siren</button>
+            <button class="ctrl-btn" onclick="clearEmergency()">Clear Alert</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: Telemetry & Analytical Insights -->
+    <div class="telemetry-col">
+
+      <!-- Card 1: Vehicle Analytics -->
+      <div class="telemetry-card" id="card-vehicles">
+        <div class="telemetry-title">
+          <span>🚗 Vehicle Traffic Analytics</span>
+          <span class="cat-badge cat-vehicles" id="badge-traffic-level">LOW</span>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box">
+            <span class="stat-val" id="val-veh-now">0</span>
+            <span class="stat-lbl">Vehicles in View</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val" id="val-veh-total">0</span>
+            <span class="stat-lbl">Total Counted</span>
+          </div>
+        </div>
+        <div class="chips-group" id="chips-vehicles">
+          <div class="chip">Cars: 0</div>
+          <div class="chip">Buses: 0</div>
+          <div class="chip">Trucks: 0</div>
+          <div class="chip">Motorcycles: 0</div>
+        </div>
+      </div>
+
+      <!-- Card 2: Crowd & Pedestrian Analytics -->
+      <div class="telemetry-card" id="card-crowd">
+        <div class="telemetry-title">
+          <span>👥 Crowd & Pedestrian Safety</span>
+          <span class="cat-badge cat-crowd" id="badge-crowd-density">SPARSE</span>
+        </div>
+        <div class="stat-row">
+          <div class="stat-box">
+            <span class="stat-val" id="val-ped-now">0</span>
+            <span class="stat-lbl">Pedestrians in View</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val" id="val-ped-total">0</span>
+            <span class="stat-lbl">Total Crossings</span>
+          </div>
+        </div>
+        <div class="gauge-wrapper">
+          <div class="gauge-header">
+            <span>Crowd Density Index</span>
+            <span id="lbl-crowd-gauge">Sparse</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-crowd" id="bar-crowd" style="width: 15%;"></div>
+          </div>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); display:flex; justify-content:space-between;">
+          <span>Crosswalk Occupied: <strong id="lbl-crosswalk-occ" style="color:#fff;">No</strong></span>
+          <span>Clusters: <strong id="lbl-clusters-cnt" style="color:#38bdf8;">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Card 3: AST Audio Siren Telemetry -->
+      <div class="telemetry-card" id="card-audio">
+        <div class="telemetry-title">
+          <span>🔊 AST Audio Siren Detector</span>
+          <span class="cat-badge" id="badge-audio-track">AUDIO ACTIVE</span>
+        </div>
+        <div class="gauge-wrapper">
+          <div class="gauge-header">
+            <span>AST Siren Probability</span>
+            <span id="val-siren-pct">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-siren" id="bar-siren" style="width: 0%;"></div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-muted);">
+          <span>State: <strong id="val-audio-state" style="color:#fff;">NO_SIREN</strong></span>
+          <span>Loudness: <strong id="val-audio-dbfs" style="color:#38bdf8;">-60 dBFS</strong></span>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Folder Explorer Modal -->
+  <div class="folder-modal-overlay" id="folder-modal" onclick="closeFolderModal()">
+    <div class="folder-modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.3rem;">📁</span>
+          <h3 style="font-size:1.05rem; font-weight:800; color:#fff;">Scenario Folder Library</h3>
+        </div>
+        <button class="close-modal-btn" onclick="closeFolderModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Vehicles Folder -->
+        <div class="folder-section">
+          <div class="folder-section-title">
+            <span>🚗 data/videos/vehicles/</span>
+            <small style="color:var(--text-muted);" id="modal-cnt-vehicles">0 clips</small>
+          </div>
+          <div class="folder-grid" id="modal-grid-vehicles"></div>
+        </div>
+
+        <!-- Crowd Folder -->
+        <div class="folder-section">
+          <div class="folder-section-title">
+            <span>👥 data/videos/crowd/</span>
+            <small style="color:var(--text-muted);" id="modal-cnt-crowd">0 clips</small>
+          </div>
+          <div class="folder-grid" id="modal-grid-crowd"></div>
+        </div>
+
+        <!-- Emergency Folder -->
+        <div class="folder-section">
+          <div class="folder-section-title">
+            <span>🚨 data/videos/emergency/</span>
+            <small style="color:var(--text-muted);" id="modal-cnt-emergency">0 clips</small>
+          </div>
+          <div class="folder-grid" id="modal-grid-emergency"></div>
+        </div>
+
+        <!-- Uploads Folder -->
+        <div class="folder-section" id="modal-section-uploads">
+          <div class="folder-section-title">
+            <span>📤 data/videos/uploads/</span>
+            <small style="color:var(--text-muted);" id="modal-cnt-uploads">0 clips</small>
+          </div>
+          <div class="folder-grid" id="modal-grid-uploads"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('pill-clock').textContent = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    let allScenarios = [];
+    let currentScenarioId = "";
+    let activeFolderTab = "vehicles";
+
+    // Fetch and render scenario catalog
+    async function loadScenarios() {
+      try {
+        const res = await fetch('/api/scenarios');
+        if (!res.ok) return;
+        allScenarios = await res.json();
+        updateFolderCounts();
+        renderActiveFolderPills();
+      } catch (err) {
+        console.error('Failed to load scenarios:', err);
+      }
+    }
+
+    function updateFolderCounts() {
+      const vehClips = allScenarios.filter(s => s.category === 'vehicles');
+      const crowdClips = allScenarios.filter(s => s.category === 'crowd');
+      const emergClips = allScenarios.filter(s => s.category === 'emergency');
+      const uploadClips = allScenarios.filter(s => s.category === 'upload');
+
+      document.getElementById('badge-cnt-vehicles').textContent = vehClips.length;
+      document.getElementById('badge-cnt-crowd').textContent = crowdClips.length;
+      document.getElementById('badge-cnt-emergency').textContent = emergClips.length;
+
+      document.getElementById('modal-cnt-vehicles').textContent = `${vehClips.length} clips`;
+      document.getElementById('modal-cnt-crowd').textContent = `${crowdClips.length} clips`;
+      document.getElementById('modal-cnt-emergency').textContent = `${emergClips.length} clips`;
+      document.getElementById('modal-cnt-uploads').textContent = `${uploadClips.length} clips`;
+    }
+
+    function switchFolder(folderName) {
+      activeFolderTab = folderName;
+      document.querySelectorAll('.folder-tab').forEach(t => t.classList.remove('active'));
+      const activeTab = document.getElementById('tab-' + folderName);
+      if (activeTab) activeTab.classList.add('active');
+      renderActiveFolderPills();
+    }
+
+    function renderActiveFolderPills() {
+      const container = document.getElementById('active-folder-clips');
+      container.innerHTML = '';
+
+      const filtered = allScenarios.filter(s => s.category === activeFolderTab);
+      if (filtered.length === 0) {
+        container.innerHTML = `<span style="font-size:0.75rem; color:#64748b; font-style:italic;">No clips in ${activeFolderTab} folder</span>`;
+        return;
+      }
+
+      filtered.forEach(s => {
+        const pill = document.createElement('button');
+        pill.className = 'clip-pill ' + (s.id === currentScenarioId ? 'active' : '');
+        pill.onclick = () => selectScenario(s.id);
+
+        const icon = s.category === 'vehicles' ? '🚗' : (s.category === 'crowd' ? '👥' : '🚨');
+        pill.innerHTML = `
+          <span>${icon}</span>
+          <span>${s.name}</span>
+          ${s.has_audio ? '<span style="font-size:0.68rem; color:#10b981;">🔊</span>' : ''}
+        `;
+        container.appendChild(pill);
+      });
+    }
+
+    async function selectScenario(scenarioId) {
+      try {
+        const res = await fetch('/api/scenarios/select', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ scenario_id: scenarioId })
+        });
+        if (res.ok) {
+          currentScenarioId = scenarioId;
+          const found = allScenarios.find(s => s.id === scenarioId);
+          if (found && found.category !== activeFolderTab && found.category !== 'upload') {
+            switchFolder(found.category);
+          } else {
+            renderActiveFolderPills();
+          }
+          closeFolderModal();
+        }
+      } catch (err) {
+        console.error('Failed to select scenario:', err);
+      }
+    }
+
+    // Modal Folder Explorer
+    function openFolderModal() {
+      populateModalGrids();
+      document.getElementById('folder-modal').classList.add('open');
+    }
+
+    function closeFolderModal() {
+      document.getElementById('folder-modal').classList.remove('open');
+    }
+
+    function populateModalGrids() {
+      const categories = ['vehicles', 'crowd', 'emergency', 'uploads'];
+      categories.forEach(cat => {
+        const grid = document.getElementById('modal-grid-' + cat);
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const targetCat = cat === 'uploads' ? 'upload' : cat;
+        const clips = allScenarios.filter(s => s.category === targetCat);
+        if (clips.length === 0) {
+          grid.innerHTML = `<span style="font-size:0.75rem; color:#64748b;">No clips present</span>`;
+          return;
+        }
+
+        clips.forEach(s => {
+          const card = document.createElement('div');
+          card.className = 'folder-card ' + (s.id === currentScenarioId ? 'active' : '');
+          card.onclick = () => selectScenario(s.id);
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="font-size:0.82rem; color:#fff;">${s.name}</strong>
+              <small style="font-size:0.68rem; color:${s.has_audio ? '#10b981' : '#64748b'};">
+                ${s.has_audio ? '🔊 Audio' : '🔇 Mute'}
+              </small>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">${s.file_name}</div>
+          `;
+          grid.appendChild(card);
+        });
+      });
+    }
+
+    async function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/scenarios/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentScenarioId = data.scenario.id;
+          await loadScenarios();
+        }
+      } catch (err) {
+        console.error('File upload failed:', err);
+      }
+    }
+
+    // Analysis Mode Controls
+    async function setAnalysisMode(mode) {
+      try {
+        await fetch('/api/control/mode', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ mode })
+        });
+        document.querySelectorAll('.btn-group-inline .ctrl-btn').forEach(b => {
+          if (b.id.startsWith('btn-mode-')) b.classList.remove('active');
+        });
+        const btn = document.getElementById('btn-mode-' + (mode === 'vehicle' ? 'veh' : mode));
+        if (btn) btn.classList.add('active');
+      } catch (err) {
+        console.error('Failed to set mode:', err);
+      }
+    }
+
+    // Speed Controls
+    async function setSpeed(stride) {
+      try {
+        await fetch('/api/control/speed', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ stride })
+        });
+        document.getElementById('btn-spd-1').classList.toggle('active', stride === 1);
+        document.getElementById('btn-spd-2').classList.toggle('active', stride === 2);
+        document.getElementById('btn-spd-3').classList.toggle('active', stride === 3);
+      } catch (err) {
+        console.error('Failed to set speed:', err);
+      }
+    }
+
+    // Emergency Injection
+    async function injectEmergency() {
+      try {
+        await fetch('/api/control/inject', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ vehicle_type: 'Ambulance', has_emergency: true })
+        });
+      } catch (err) {
+        console.error('Emergency injection failed:', err);
+      }
+    }
+
+    async function clearEmergency() {
+      try {
+        await fetch('/api/control/clear-inject', { method: 'POST' });
+      } catch (err) {
+        console.error('Clear emergency failed:', err);
+      }
+    }
+
+    // Telemetry Polling Loop (~10Hz)
+    async function pollStatus() {
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        updateUI(data);
+      } catch (err) {}
+    }
+
+    function updateUI(data) {
+      if (!data || !data.scenario) return;
+
+      // Header pills
+      document.getElementById('pill-fps').textContent = `FPS: ${data.fps || '--'}`;
+      document.getElementById('pill-device').textContent = `DEVICE: ${data.device || 'CPU'}`;
+      document.getElementById('pill-mode').textContent = `MODE: ${(data.effective_mode || 'AUTO').toUpperCase()}`;
+
+      // Update active scenario name
+      if (data.scenario.name) {
+        document.getElementById('active-scenario-name').textContent = data.scenario.name;
+        if (currentScenarioId !== data.scenario.id) {
+          currentScenarioId = data.scenario.id;
+          const found = allScenarios.find(s => s.id === currentScenarioId);
+          if (found && found.category !== activeFolderTab && found.category !== 'upload') {
+            switchFolder(found.category);
+          } else {
+            renderActiveFolderPills();
+          }
+        }
+      }
+
+      // Decision & Signal Light
+      const banner = document.getElementById('decision-banner');
+      const badge = document.getElementById('banner-badge');
+      const headline = document.getElementById('banner-headline');
+      const desc = document.getElementById('banner-desc');
+      const timerVal = document.getElementById('phase-timer-val');
+
+      const decision = data.decision || {};
+      const status = decision.system_status || 'NORMAL';
+      const phase = decision.signal_phase || 'GREEN';
+
+      // Signal Lamps
+      const redLamp = document.getElementById('lamp-red');
+      const yellowLamp = document.getElementById('lamp-yellow');
+      const greenLamp = document.getElementById('lamp-green');
+      redLamp.className = 'signal-lamp red' + (phase === 'RED' || phase === 'PEDESTRIAN_WALK' ? ' on' : '');
+      yellowLamp.className = 'signal-lamp yellow' + (phase === 'YELLOW' ? ' on' : '');
+      greenLamp.className = 'signal-lamp green' + (phase === 'GREEN' || phase === 'EMERGENCY_CLEARANCE' ? ' on' : '');
+
+      // Banner Styling
+      if (status === 'EMERGENCY_PREEMPTION') {
+        banner.className = 'decision-banner emergency';
+        badge.className = 'banner-badge badge-emergency';
+        badge.textContent = 'EMERGENCY PREEMPTION';
+      } else if (status === 'PEDESTRIAN_CROSSING') {
+        banner.className = 'decision-banner pedestrian';
+        badge.className = 'banner-badge badge-pedestrian';
+        badge.textContent = 'PEDESTRIAN WALK PHASE';
+      } else if (status === 'CONGESTION_PRIORITY') {
+        banner.className = 'decision-banner congestion';
+        badge.className = 'banner-badge badge-congestion';
+        badge.textContent = 'CONGESTION EXTENSION';
+      } else {
+        banner.className = 'decision-banner normal';
+        badge.className = 'banner-badge badge-normal';
+        badge.textContent = 'NORMAL TRAFFIC CYCLE';
+      }
+
+      headline.textContent = decision.headline || 'Adaptive Monitoring Active';
+      desc.textContent = decision.recommendation || '';
+      timerVal.textContent = (decision.recommended_duration_sec || 15) + 's';
+
+      // Vehicle Telemetry
+      const veh = data.vehicles || {};
+      document.getElementById('val-veh-now').textContent = veh.visible_now || 0;
+      document.getElementById('val-veh-total').textContent = veh.total_unique || 0;
+      const lvl = veh.level || 'LOW';
+      const lvlBadge = document.getElementById('badge-traffic-level');
+      lvlBadge.textContent = lvl;
+      lvlBadge.className = 'cat-badge ' + (lvl === 'HIGH' ? 'cat-emergency' : (lvl === 'MEDIUM' ? 'cat-upload' : 'cat-vehicles'));
+
+      const cls = veh.by_class || {};
+      document.getElementById('chips-vehicles').innerHTML = `
+        <div class="chip">🚗 Cars: ${cls.car || 0}</div>
+        <div class="chip">🚌 Buses: ${cls.bus || 0}</div>
+        <div class="chip">🚛 Trucks: ${cls.truck || 0}</div>
+        <div class="chip">🏍️ Bikes: ${cls.motorcycle || 0}</div>
+      `;
+
+      // Crowd Telemetry
+      const crowd = data.crowd || {};
+      document.getElementById('val-ped-now').textContent = crowd.headcount || 0;
+      document.getElementById('val-ped-total').textContent = crowd.cumulative || 0;
+      const density = crowd.density_level || 'SPARSE';
+      document.getElementById('badge-crowd-density').textContent = density;
+      document.getElementById('lbl-crowd-gauge').textContent = density;
+
+      let crowdPct = 15;
+      if (density === 'MODERATE') crowdPct = 45;
+      else if (density === 'CROWDED') crowdPct = 75;
+      else if (density === 'SURGE_RISK') crowdPct = 100;
+      document.getElementById('bar-crowd').style.width = crowdPct + '%';
+
+      document.getElementById('lbl-crosswalk-occ').textContent = crowd.crosswalk_occupied ? 'YES (Active)' : 'No';
+      document.getElementById('lbl-crosswalk-occ').style.color = crowd.crosswalk_occupied ? '#f59e0b' : '#fff';
+      document.getElementById('lbl-clusters-cnt').textContent = crowd.cluster_count || 0;
+
+      // Audio Telemetry
+      const audio = data.audio || {};
+      const sirenPct = Math.round((audio.confidence || 0) * 100);
+      document.getElementById('val-siren-pct').textContent = sirenPct + '%';
+      document.getElementById('bar-siren').style.width = sirenPct + '%';
+      document.getElementById('val-audio-state').textContent = audio.state || 'NO_SIREN';
+      document.getElementById('val-audio-state').style.color = audio.emergency_active ? '#ef4444' : '#fff';
+      document.getElementById('val-audio-dbfs').textContent = (audio.loudness_dbfs || -60).toFixed(1) + ' dBFS';
+
+      const audioBadge = document.getElementById('badge-audio-track');
+      if (audio.has_audio_track) {
+        audioBadge.textContent = 'AUDIO ACTIVE';
+        audioBadge.className = 'cat-badge cat-vehicles';
+      } else {
+        audioBadge.textContent = 'NO SOUNDTRACK';
+        audioBadge.className = 'cat-badge cat-crowd';
+      }
+    }
+
+    loadScenarios();
+    setInterval(pollStatus, 120);
+    pollStatus();
+  </script>
+</body>
+</html>
