@@ -1,5 +1,5 @@
 """
-Unit tests for the FastAPI Dashboard Server & Telemetry API (Module 11).
+Unit tests for the FastAPI Presentation Dashboard Server & Telemetry API (Module 11).
 """
 
 import pytest
@@ -19,7 +19,6 @@ def test_index_page(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert "SmartCity Sentinel" in resp.text
-    assert "North Approach" in resp.text
 
 
 def test_api_health(client):
@@ -36,29 +35,46 @@ def test_api_status(client):
     resp = client.get("/api/status")
     assert resp.status_code == 200
     data = resp.json()
-    # Check for core keys if pipeline has stepped or is initialized
     assert isinstance(data, dict)
 
 
-def test_control_injection(client):
-    """Verify emergency vehicle injection control endpoints."""
-    # Inject emergency on North approach
-    resp_inject = client.post("/api/control/inject", json={"direction": "north", "vehicle_type": "Ambulance"})
-    assert resp_inject.status_code == 200
-    assert resp_inject.json()["injected"] == "north"
+def test_api_scenarios(client):
+    """Verify that /api/scenarios returns a list of curated scenario clips."""
+    resp = client.get("/api/scenarios")
+    assert resp.status_code == 200
+    scenarios = resp.json()
+    assert isinstance(scenarios, list)
+    assert len(scenarios) > 0
+    assert "file_name" in scenarios[0]
 
-    assert pipeline.injected_direction == "north"
+
+def test_control_mode(client):
+    """Verify mode switching API."""
+    resp = client.post("/api/control/mode", json={"mode": "crowd"})
+    assert resp.status_code == 200
+    assert resp.json()["mode"] == "crowd"
+    assert pipeline.active_mode == "crowd"
+
+    # Reset back to auto
+    resp_auto = client.post("/api/control/mode", json={"mode": "auto"})
+    assert resp_auto.status_code == 200
+    assert pipeline.active_mode == "auto"
+
+
+def test_control_injection(client):
+    """Verify emergency vehicle beacon injection control endpoints."""
+    # Inject emergency
+    resp_inject = client.post("/api/control/inject", json={"has_emergency": True, "vehicle_type": "Ambulance"})
+    assert resp_inject.status_code == 200
+    assert resp_inject.json()["injected"] is True
+
+    assert pipeline.injected_emergency is True
     assert pipeline.injected_label == "Ambulance"
 
     # Clear injection
     resp_clear = client.post("/api/control/clear-inject")
     assert resp_clear.status_code == 200
-    assert resp_clear.json()["injected"] is None
-    assert pipeline.injected_direction is None
+    assert resp_clear.json()["injected"] is False
+    assert pipeline.injected_emergency is False
 
-
-def test_invalid_direction_feed(client):
-    """Verify that requesting an invalid feed direction returns 404."""
-    resp = client.get("/video_feed/invalid_direction")
-    assert resp.status_code == 404
 

@@ -12,6 +12,7 @@ or:
 """
 
 import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -26,15 +27,43 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 import uvicorn
-from app.dashboard.server import app
+from app.dashboard.server import app, pipeline
+
+
+def sigint_handler(sig, frame):
+    print("\n[INFO] Interrupt signal received, stopping pipeline and exiting cleanly...")
+    try:
+        pipeline.stop()
+    except Exception:
+        pass
+    sys.exit(0)
 
 
 def main(host: str = "127.0.0.1", port: int = 8000):
+    try:
+        signal.signal(signal.SIGINT, sigint_handler)
+        signal.signal(signal.SIGTERM, sigint_handler)
+    except Exception:
+        pass
+
     print("\n" + "=" * 70)
     print(" 🚦 SmartCity Sentinel - High-Performance Web Dashboard")
     print(f" Dashboard URL: http://127.0.0.1:{port}")
     print("=" * 70 + "\n")
-    uvicorn.run(app, host=host, port=port, log_level="info")
+
+    config = uvicorn.Config(
+        app,
+        host=host,
+        port=port,
+        log_level="info",
+        timeout_graceful_shutdown=1,
+        timeout_keep_alive=3,
+    )
+    server = uvicorn.Server(config)
+    try:
+        server.run()
+    finally:
+        pipeline.stop()
 
 
 if __name__ == "__main__":

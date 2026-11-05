@@ -507,8 +507,10 @@ async def video_feed(request: Request):
                     yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
 
                 await asyncio.sleep(0.015)
-        except (asyncio.CancelledError, GeneratorExit):
+        except (asyncio.CancelledError, GeneratorExit, ConnectionResetError, BrokenPipeError):
             pass
+        except Exception as err:
+            logger.debug("Client stream ended: %s", err)
 
     return StreamingResponse(
         frame_stream(),
