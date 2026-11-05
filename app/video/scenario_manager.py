@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 CATEGORY_VEHICLES = "vehicles"
 CATEGORY_CROWD = "crowd"
 CATEGORY_EMERGENCY = "emergency"
-CATEGORY_UPLOAD = "upload"
+CATEGORY_UPLOAD = "uploads"
 
 FRIENDLY_NAMES = {
     "01_dense_intersection.mp4": "Dense Junction Congestion",

@@ -3,46 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartCity Sentinel — Adaptive Traffic & Crowd Presentation HUD</title>
+  <title>TMC Central Signal Controller — Municipal Traffic Operations Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #080c14;
-      --card-bg: #101726;
-      --card-border: #1e293b;
-      --card-hover: #1e293f;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-blue: #3b82f6;
-      --accent-cyan: #06b6d4;
-      --status-green: #10b981;
-      --status-yellow: #f59e0b;
-      --status-red: #ef4444;
-      --status-purple: #8b5cf6;
-      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --bg-base: #0b0f17;
+      --bg-surface: #111726;
+      --bg-surface-elevated: #162032;
+      --bg-surface-input: #0e1422;
+      --border-color: #1e293b;
+      --border-focus: #3b82f6;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --color-green: #10b981;
+      --color-green-glow: rgba(16, 185, 129, 0.4);
+      --color-amber: #f59e0b;
+      --color-amber-glow: rgba(245, 158, 11, 0.4);
+      --color-red: #ef4444;
+      --color-red-glow: rgba(239, 68, 68, 0.4);
+      --color-blue: #3b82f6;
+      --color-cyan: #06b6d4;
+      
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
+      background-color: var(--bg-base);
+      color: var(--text-primary);
       font-family: var(--font-sans);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+      -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
 
-    /* Header */
+    /* 1. Header: Municipal Operations Console */
     header {
-      background: rgba(16, 23, 38, 0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--card-border);
-      padding: 0.75rem 1.5rem;
+      background: #0e1422;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.6rem 1.25rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -51,249 +59,320 @@
       z-index: 50;
     }
 
-    .brand {
+    .brand-section {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
 
-    .brand-icon {
-      font-size: 1.8rem;
-    }
-
-    .brand h1 {
-      font-size: 1.25rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand span {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-left: 0.5rem;
-      font-weight: 500;
-    }
-
-    .header-pills {
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-    }
-
-    .pill {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
+    .brand-seal {
+      width: 34px;
+      height: 34px;
       background: #1e293b;
       border: 1px solid #334155;
-      padding: 0.35rem 0.75rem;
-      border-radius: 9999px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      justify-content: center;
+      color: #94a3b8;
     }
 
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      background-color: var(--status-green);
+    .brand-titles h1 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-titles h1 span.badge-its {
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .brand-titles p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      letter-spacing: -0.01em;
+    }
+
+    .header-diagnostics {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .diag-pill {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      background: #131b2e;
+      border: 1px solid var(--border-color);
+      padding: 0.3rem 0.65rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .diag-pill strong {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .status-indicator-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      box-shadow: 0 0 10px var(--status-green);
-      animation: pulse 1.8s infinite;
+      background-color: var(--color-green);
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
-
-    /* Clean Folder Navigation Bar */
-    .folder-bar {
-      background: #0d1424;
-      border-bottom: 1px solid var(--card-border);
-      padding: 0.55rem 1.5rem;
+    /* 2. CCTV Video Matrix & Folder Toolbar */
+    .vms-toolbar {
+      background: #101625;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.5rem 1.25rem;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      align-items: center;
+      gap: 0.85rem;
       flex-wrap: wrap;
     }
 
-    .folder-nav-left {
+    .vms-left {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      flex: 1;
+      min-width: 320px;
     }
 
-    .folder-library-btn {
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #fff;
-      padding: 0.4rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
+    /* Folder Tabs (Exact Folder Names: Vehicles, Crowd, Emergency, Uploads) */
+    .vms-filter-tabs {
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s;
-    }
-
-    .folder-library-btn:hover {
-      background: #273549;
-      border-color: var(--accent-cyan);
-    }
-
-    .folder-tabs {
-      display: flex;
-      gap: 0.3rem;
-      background: #080c14;
+      gap: 0.25rem;
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
       padding: 0.2rem;
-      border-radius: 8px;
-      border: 1px solid var(--card-border);
     }
 
-    .folder-tab {
+    .vms-tab-btn {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 0.35rem 0.75rem;
-      border-radius: 6px;
-      font-size: 0.78rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
 
-    .folder-tab:hover {
-      color: #fff;
-      background: #141d2f;
+    .vms-tab-btn:hover {
+      color: var(--text-primary);
+      background: #172134;
     }
 
-    .folder-tab.active {
+    .vms-tab-btn.active {
       background: #1e293b;
       color: #fff;
     }
 
-    .folder-tab.active#tab-vehicles { color: #34d399; }
-    .folder-tab.active#tab-crowd { color: #60a5fa; }
-    .folder-tab.active#tab-emergency { color: #f87171; }
+    .vms-tab-btn.active#tab-vehicles { color: #34d399; }
+    .vms-tab-btn.active#tab-crowd { color: #60a5fa; }
+    .vms-tab-btn.active#tab-emergency { color: #f87171; }
+    .vms-tab-btn.active#tab-uploads { color: #c084fc; }
 
-    .tab-badge {
+    .tab-count {
+      font-family: var(--font-mono);
       font-size: 0.68rem;
-      padding: 0.1rem 0.35rem;
-      border-radius: 9999px;
+      background: #283548;
+      color: #94a3b8;
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+    }
+
+    .vms-tab-btn.active .tab-count {
       background: #334155;
       color: #fff;
-      font-family: var(--font-mono);
     }
 
-    /* Sub-pills for current folder */
-    .folder-clips-pills {
+    /* Inline Clips Container */
+    .vms-clips-container {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      flex: 1;
+      gap: 0.45rem;
       overflow-x: auto;
+      flex: 1;
+      padding: 0.15rem 0;
     }
 
-    .clip-pill {
-      background: #141c2c;
-      border: 1px solid #233148;
-      color: var(--text-muted);
-      padding: 0.35rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 600;
+    .clip-chip {
+      background: #131c2e;
+      border: 1px solid #1f2b40;
+      color: #cbd5e1;
+      padding: 0.3rem 0.65rem;
+      border-radius: 5px;
+      font-size: 0.74rem;
+      font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      transition: all 0.15s;
+      gap: 0.45rem;
+      transition: all 0.15s ease;
+      font-family: var(--font-sans);
     }
 
-    .clip-pill:hover {
-      background: #1c273d;
+    .clip-chip:hover {
+      background: #1b263d;
       color: #fff;
       border-color: #3b82f6;
     }
 
-    .clip-pill.active {
-      background: rgba(6, 182, 212, 0.18);
-      border-color: var(--accent-cyan);
-      color: #fff;
-      box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    .clip-chip.active {
+      background: #162438;
+      border-color: #38bdf8;
+      color: #f0f9ff;
+      box-shadow: 0 0 0 1px #38bdf8;
     }
 
-    .upload-quick-btn {
-      background: transparent;
-      border: 1px dashed #475569;
-      color: var(--text-muted);
-      padding: 0.38rem 0.8rem;
-      border-radius: 6px;
+    .clip-chip-filename {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: #94a3b8;
+    }
+
+    .clip-chip.active .clip-chip-filename {
+      color: #7dd3fc;
+    }
+
+    .clip-chip-audio {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 0.05rem 0.3rem;
+      border-radius: 3px;
+    }
+
+    .vms-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-action {
+      background: #162032;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
       font-size: 0.75rem;
       font-weight: 600;
+      padding: 0.38rem 0.75rem;
+      border-radius: 5px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
 
-    .upload-quick-btn:hover {
-      border-color: var(--accent-cyan);
+    .btn-action:hover {
+      background: #1e2c45;
+      color: var(--text-primary);
+      border-color: #3b82f6;
+    }
+
+    .btn-emergency-override {
+      background: #3b1115;
+      border: 1px solid #7f1d1d;
+      color: #fca5a5;
+    }
+
+    .btn-emergency-override:hover {
+      background: #4c1d24;
+      border-color: #ef4444;
       color: #fff;
-      background: rgba(6, 182, 212, 0.1);
     }
 
-    /* Main Grid */
+    .btn-emergency-clear {
+      background: #1a2233;
+      border: 1px solid #334155;
+      color: var(--text-secondary);
+    }
+
+    /* 3. Main Operational Grid */
     main {
-      padding: 1rem 1.5rem;
+      padding: 1rem 1.25rem;
       display: grid;
-      grid-template-columns: 1.6fr 1fr;
-      gap: 1.25rem;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 1rem;
       flex: 1;
     }
 
-    /* Video Section */
-    .video-section {
+    /* Left Column: CCTV Stream & NEMA Signal Controller */
+    .viewport-column {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
 
-    .video-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
+    /* CCTV Player Card */
+    .cctv-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    .video-header {
-      padding: 0.75rem 1rem;
-      background: #141d30;
+    .cctv-osd-top {
+      background: #090d16;
+      border-bottom: 1px solid #1a2436;
+      padding: 0.45rem 0.85rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--card-border);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #94a3b8;
     }
 
-    .video-title-group {
+    .osd-cam-id {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      color: #e2e8f0;
+      font-weight: 600;
     }
 
-    .video-feed-wrapper {
+    .rec-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-red);
+    }
+
+    .video-viewport {
       position: relative;
       background: #000;
       aspect-ratio: 16 / 9;
@@ -302,590 +381,979 @@
       justify-content: center;
     }
 
-    .video-feed-wrapper img {
+    .video-viewport img {
       width: 100%;
       height: 100%;
       object-fit: contain;
       display: block;
     }
 
-    .controls-bar {
-      padding: 0.6rem 1rem;
-      background: #0d1424;
+    /* CCTV Control Bar */
+    .cctv-toolbar {
+      background: #0e1422;
+      border-top: 1px solid #1a2436;
+      padding: 0.45rem 0.85rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-top: 1px solid var(--card-border);
       flex-wrap: wrap;
       gap: 0.5rem;
     }
 
-    .btn-group-inline {
+    .cctv-tool-group {
       display: flex;
+      align-items: center;
       gap: 0.35rem;
-      align-items: center;
     }
 
-    .ctrl-btn {
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: var(--text-muted);
-      padding: 0.35rem 0.65rem;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .ctrl-btn:hover {
-      background: #273549;
-      color: #fff;
-    }
-
-    .ctrl-btn.active {
-      background: #2563eb;
-      color: #fff;
-      border-color: #3b82f6;
-    }
-
-    /* Decision Banner */
-    .decision-banner {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .decision-banner.normal {
-      border-left: 6px solid var(--status-green);
-    }
-
-    .decision-banner.emergency {
-      border-left: 6px solid var(--status-red);
-      background: linear-gradient(90deg, rgba(239, 68, 68, 0.15), var(--card-bg));
-      animation: alert-pulse 1.5s infinite;
-    }
-
-    .decision-banner.pedestrian {
-      border-left: 6px solid var(--accent-blue);
-      background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), var(--card-bg));
-    }
-
-    .decision-banner.congestion {
-      border-left: 6px solid var(--status-yellow);
-      background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), var(--card-bg));
-    }
-
-    @keyframes alert-pulse {
-      0%, 100% { border-color: var(--status-red); }
-      50% { border-color: #f87171; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-    }
-
-    .signal-light-box {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      background: #000;
-      padding: 6px;
-      border-radius: 8px;
-      border: 1px solid #334155;
-    }
-
-    .signal-lamp {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #222;
-    }
-
-    .signal-lamp.red.on { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
-    .signal-lamp.yellow.on { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
-    .signal-lamp.green.on { background: #10b981; box-shadow: 0 0 10px #10b981; }
-
-    .banner-text-box {
-      flex: 1;
-    }
-
-    .banner-badge {
+    .tool-label {
       font-size: 0.7rem;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
-      display: inline-block;
-      margin-bottom: 0.25rem;
-    }
-
-    .badge-normal { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-    .badge-emergency { background: rgba(239, 68, 68, 0.25); color: #f87171; }
-    .badge-pedestrian { background: rgba(59, 130, 246, 0.25); color: #60a5fa; }
-    .badge-congestion { background: rgba(245, 158, 11, 0.25); color: #fbbf24; }
-
-    .banner-headline {
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .banner-desc {
-      font-size: 0.82rem;
+      font-weight: 600;
       color: var(--text-muted);
-      margin-top: 0.2rem;
-    }
-
-    .phase-timer-pill {
-      background: #1e293b;
-      border: 1px solid #334155;
-      padding: 0.5rem 0.85rem;
-      border-radius: 8px;
-      text-align: center;
-    }
-
-    .phase-timer-val {
-      font-size: 1.3rem;
-      font-weight: 800;
       font-family: var(--font-mono);
-      color: var(--accent-cyan);
-    }
-
-    .phase-timer-lbl {
-      font-size: 0.65rem;
-      color: var(--text-muted);
+      margin-right: 0.2rem;
       text-transform: uppercase;
     }
 
-    /* Right Telemetry Column */
-    .telemetry-col {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .btn-tool {
+      background: #141c2c;
+      border: 1px solid #233148;
+      color: #94a3b8;
+      padding: 0.24rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
     }
 
-    .telemetry-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
+    .btn-tool:hover {
+      background: #1c273d;
+      color: #fff;
+    }
+
+    .btn-tool.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    /* 4. NEMA TS-2 Hardware Signal Controller Cabinet */
+    .controller-cabinet {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      gap: 1.25rem;
+      align-items: center;
+    }
+
+    /* Vehicular 3-Lens Traffic Signal Head */
+    .signal-head-housing {
+      background: #10141d;
+      border: 2px solid #222c3d;
       border-radius: 12px;
-      padding: 1rem;
+      padding: 8px 6px;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 7px;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+      position: relative;
     }
 
-    .telemetry-title {
-      font-size: 0.88rem;
+    .signal-hood {
+      position: absolute;
+      top: -3px;
+      left: 3px;
+      right: 3px;
+      height: 4px;
+      background: #1a2230;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .optical-lens {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #1c2432;
+      background: #151a24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .optical-lens::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255,255,255,0.06);
+    }
+
+    /* Lens Illumination States */
+    .optical-lens.red.on {
+      background: radial-gradient(circle, #ff4d4d 30%, #b91c1c 90%);
+      border-color: #ef4444;
+      box-shadow: 0 0 12px var(--color-red-glow);
+    }
+
+    .optical-lens.yellow.on {
+      background: radial-gradient(circle, #fde047 30%, #d97706 90%);
+      border-color: #f59e0b;
+      box-shadow: 0 0 12px var(--color-amber-glow);
+    }
+
+    .optical-lens.green.on {
+      background: radial-gradient(circle, #34d399 30%, #047857 90%);
+      border-color: #10b981;
+      box-shadow: 0 0 12px var(--color-green-glow);
+    }
+
+    /* Pedestrian Signal Head (MUTCD Hand / Walk + Timer) */
+    .ped-head-housing {
+      background: #10141d;
+      border: 2px solid #222c3d;
+      border-radius: 8px;
+      padding: 8px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+      min-width: 58px;
+    }
+
+    .ped-symbol-box {
+      width: 42px;
+      height: 42px;
+      background: #151a24;
+      border-radius: 6px;
+      border: 1px solid #1e2838;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2b3548;
+      transition: all 0.2s;
+    }
+
+    .ped-symbol-box.hand.on {
+      color: #f97316;
+      border-color: #ea580c;
+      box-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+    }
+
+    .ped-symbol-box.walk.on {
+      color: #f8fafc;
+      border-color: #38bdf8;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    }
+
+    .ped-countdown-box {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #334155;
+      background: #090d16;
+      border: 1px solid #1e2838;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      text-align: center;
+      width: 100%;
+      letter-spacing: 0.05em;
+    }
+
+    .ped-countdown-box.active {
+      color: #f59e0b;
+    }
+
+    /* Controller Telemetry Block */
+    .controller-logic-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .phase-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .phase-status-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.18rem 0.5rem;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-normal { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-emergency { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .tag-pedestrian { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+
+    .phase-title-text {
+      font-size: 0.92rem;
       font-weight: 700;
       color: #fff;
+    }
+
+    .phase-reason-text {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+
+    .phase-timing-bar-wrapper {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 0.4rem;
+      gap: 0.65rem;
+      margin-top: 0.15rem;
     }
 
-    .stat-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.6rem;
-    }
-
-    .stat-box {
-      background: #141c2b;
-      border: 1px solid #1f2b3f;
-      border-radius: 8px;
-      padding: 0.5rem 0.75rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-val {
-      font-size: 1.4rem;
-      font-weight: 800;
-      font-family: var(--font-mono);
-      color: #fff;
-    }
-
-    .stat-lbl {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    /* Progress & Gauges */
-    .gauge-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-
-    .gauge-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
-
-    .progress-bar-bg {
-      background: #1e293b;
-      height: 8px;
-      border-radius: 9999px;
+    .timing-meter {
+      flex: 1;
+      height: 6px;
+      background: #141c2c;
+      border: 1px solid #233148;
+      border-radius: 3px;
       overflow: hidden;
     }
 
-    .progress-bar-fill {
+    .timing-meter-fill {
       height: 100%;
-      border-radius: 9999px;
-      transition: width 0.25s ease;
+      background: #3b82f6;
+      width: 45%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
     }
 
-    .fill-siren { background: linear-gradient(90deg, #3b82f6, #f59e0b, #ef4444); }
-    .fill-crowd { background: linear-gradient(90deg, #10b981, #3b82f6, #ef4444); }
+    .timing-meter-fill.emergency { background: #ef4444; }
+    .timing-meter-fill.pedestrian { background: #3b82f6; }
+    .timing-meter-fill.normal { background: #10b981; }
 
-    /* Class Chips */
-    .chips-group {
-      display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      font-size: 0.72rem;
-      background: #141d2f;
-      border: 1px solid #233148;
-      padding: 0.25rem 0.5rem;
-      border-radius: 6px;
-      color: #e2e8f0;
+    .timing-digits {
       font-family: var(--font-mono);
-    }
-
-    .cat-badge {
-      font-size: 0.65rem;
+      font-size: 0.8rem;
       font-weight: 700;
+      color: #e2e8f0;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 5. Right Column: Engineering Telemetry Modules */
+    .telemetry-column {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .module-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1a2436;
+      padding-bottom: 0.4rem;
+    }
+
+    .module-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .module-badge {
       font-family: var(--font-mono);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 0.12rem 0.45rem;
+      border-radius: 3px;
       text-transform: uppercase;
     }
 
-    .cat-vehicles { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-    .cat-crowd { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-    .cat-emergency { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-    .cat-upload { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .badge-clear { background: #064e3b; color: #34d399; }
+    .badge-alert { background: #7f1d1d; color: #fca5a5; }
+    .badge-warn { background: #78350f; color: #fde68a; }
+    .badge-info { background: #1e3a8a; color: #93c5fd; }
+
+    /* Telemetry KPI 2-Column Matrix */
+    .kpi-matrix {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    .kpi-cell {
+      background: #0e1422;
+      border: 1px solid #1a2538;
+      border-radius: 5px;
+      padding: 0.45rem 0.65rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kpi-value {
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .kpi-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-top: 0.15rem;
+    }
+
+    /* Structured Breakdown Table */
+    .class-breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.74rem;
+    }
+
+    .class-breakdown-table tr {
+      border-bottom: 1px solid #162032;
+    }
+
+    .class-breakdown-table tr:last-child {
+      border-bottom: none;
+    }
+
+    .class-breakdown-table td {
+      padding: 0.28rem 0;
+      color: var(--text-secondary);
+    }
+
+    .class-breakdown-table td.col-bar {
+      width: 45%;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    .class-breakdown-table td.col-val {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mini-bar-bg {
+      background: #141c2c;
+      height: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 2px;
+      transition: width 0.2s ease;
+    }
+
+    /* Density Multi-Segment Gauge */
+    .segment-gauge {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+    }
+
+    .segment-cell {
+      background: #121927;
+      border: 1px solid #1e293b;
+      padding: 0.25rem 0;
+      border-radius: 3px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .segment-cell.active-sparse { background: #064e3b; border-color: #10b981; color: #34d399; }
+    .segment-cell.active-moderate { background: #1e3a8a; border-color: #3b82f6; color: #93c5fd; }
+    .segment-cell.active-crowded { background: #78350f; border-color: #f59e0b; color: #fde68a; }
+    .segment-cell.active-surge { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; }
+
+    /* AST Siren Meter */
+    .gauge-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .gauge-top-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+
+    .siren-track {
+      position: relative;
+      height: 8px;
+      background: #141c2c;
+      border: 1px solid #1e2838;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .siren-fill {
+      height: 100%;
+      background: #3b82f6;
+      width: 0%;
+      transition: width 0.25s ease, background 0.25s;
+    }
+
+    .siren-fill.triggered {
+      background: #ef4444;
+    }
+
+    .threshold-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 70%;
+      width: 2px;
+      background: #f59e0b;
+    }
+
+    /* 6. Operations Audit Log (Terminal) */
+    .audit-terminal {
+      background: #090d16;
+      border: 1px solid #192336;
+      border-radius: 6px;
+      padding: 0.5rem;
+      max-height: 120px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .log-line {
+      display: flex;
+      gap: 0.4rem;
+      color: #94a3b8;
+      line-height: 1.3;
+    }
+
+    .log-ts {
+      color: #475569;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .log-src {
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .log-src.SYSTEM { color: #38bdf8; }
+    .log-src.SIGNAL { color: #34d399; }
+    .log-src.INTERLOCK { color: #fbbf24; }
+    .log-src.EMERGENCY { color: #f87171; }
+    .log-src.AST_AI { color: #c084fc; }
+    .log-src.SOURCE { color: #e2e8f0; }
+    .log-src.CONTROL { color: #94a3b8; }
+
+    .log-msg {
+      color: #cbd5e1;
+      word-break: break-all;
+    }
 
     /* Modal for Folder Explorer */
-    .folder-modal-overlay {
+    .modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
       z-index: 100;
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
     }
 
-    .folder-modal-overlay.open {
-      display: flex;
-    }
+    .modal-overlay.open { display: flex; }
 
-    .folder-modal {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      max-width: 860px;
+    .modal-window {
+      background: var(--bg-surface);
+      border: 1px solid #28374d;
+      border-radius: 8px;
+      max-width: 800px;
       width: 100%;
-      max-height: 85vh;
-      overflow: hidden;
+      max-height: 80vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
     }
 
-    .modal-header {
-      padding: 1rem 1.25rem;
-      background: #141d30;
-      border-bottom: 1px solid var(--card-border);
+    .modal-head {
+      background: #0f1624;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.25rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .close-modal-btn {
+    .modal-head h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .modal-close-btn {
       background: transparent;
       border: none;
-      color: #94a3b8;
-      font-size: 1.6rem;
+      color: var(--text-muted);
+      font-size: 1.3rem;
       cursor: pointer;
+      line-height: 1;
     }
-    .close-modal-btn:hover { color: #fff; }
+
+    .modal-close-btn:hover { color: #fff; }
 
     .modal-body {
-      padding: 1.25rem;
+      padding: 1rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1rem;
     }
 
-    .folder-section {
-      background: #0d1424;
-      border: 1px solid #1e293b;
-      border-radius: 8px;
-      padding: 0.85rem;
+    .modal-folder-group {
+      background: #0c121e;
+      border: 1px solid #1a2538;
+      border-radius: 6px;
+      padding: 0.65rem 0.85rem;
     }
 
-    .folder-section-title {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: #fff;
+    .modal-folder-label {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.6rem;
-      font-family: var(--font-mono);
     }
 
-    .folder-grid {
+    .modal-clip-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 0.6rem;
+      gap: 0.5rem;
     }
 
-    .folder-card {
+    .modal-clip-item {
       background: #141c2c;
       border: 1px solid #233148;
-      border-radius: 6px;
+      border-radius: 5px;
       padding: 0.6rem 0.75rem;
       cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
       transition: all 0.15s;
     }
 
-    .folder-card:hover {
-      border-color: var(--accent-cyan);
-      background: #1c273d;
-      transform: translateY(-2px);
+    .modal-clip-item:hover {
+      border-color: #3b82f6;
+      background: #1b263b;
     }
 
-    .folder-card.active {
-      border-color: var(--accent-cyan);
-      background: rgba(6, 182, 212, 0.18);
+    .modal-clip-item.active {
+      border-color: #38bdf8;
+      background: #192a45;
     }
 
-    /* Hidden file input */
     #file-upload-input { display: none; }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1024px) {
       main { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Global Header -->
+  <!-- 1. Top Operations Command Header -->
   <header>
-    <div class="brand">
-      <div class="brand-icon">🚦</div>
-      <div>
-        <h1>SmartCity Sentinel</h1>
-        <span>Adaptive Multimodal Traffic & Crowd Operations</span>
+    <div class="brand-section">
+      <div class="brand-seal">
+        <!-- SVG Traffic Shield Icon -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"></path>
+          <path d="M12 8v4"></path>
+          <path d="M12 16h.01"></path>
+        </svg>
+      </div>
+      <div class="brand-titles">
+        <h1>
+          METRO TRAFFIC OPERATIONS CENTER
+          <span class="badge-its">ITS-ATC v2.4</span>
+        </h1>
+        <p>Intersection Node INT-402 · Broadway & 5th Ave · Multimodal Controller</p>
       </div>
     </div>
-    <div class="header-pills">
-      <div class="pill">
-        <div class="live-dot"></div>
-        <span>LIVE PIPELINE</span>
+
+    <div class="header-diagnostics">
+      <div class="diag-pill">
+        <span class="status-indicator-dot"></span>
+        <span>LINK: <strong id="lbl-link-status">ONLINE</strong></span>
       </div>
-      <div class="pill" id="pill-mode">MODE: AUTO</div>
-      <div class="pill" id="pill-fps">FPS: --</div>
-      <div class="pill" id="pill-device">DEVICE: --</div>
-      <div class="pill" id="pill-clock">00:00:00</div>
+      <div class="diag-pill">
+        <span>FPS: <strong id="pill-fps">--</strong></span>
+      </div>
+      <div class="diag-pill">
+        <span>DEVICE: <strong id="pill-device">CPU</strong></span>
+      </div>
+      <div class="diag-pill">
+        <span>MODE: <strong id="pill-mode">ADAPTIVE AUTO</strong></span>
+      </div>
+      <div class="diag-pill" id="pill-clock">00:00:00 UTC</div>
     </div>
   </header>
 
-  <!-- Clean Folder Navigation Bar -->
-  <div class="folder-bar">
-    <div class="folder-nav-left">
-      <button class="folder-library-btn" onclick="openFolderModal()">
-        <span>📁</span>
-        <span>Scenario Folders</span>
+  <!-- 2. CCTV Video Matrix & Folder Toolbar -->
+  <div class="vms-toolbar">
+    <div class="vms-left">
+      <!-- Folder Explorer Button -->
+      <button class="btn-action" onclick="openFolderModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Folder</span>
       </button>
 
-      <!-- Category Tabs (Architecture Folders) -->
-      <div class="folder-tabs">
-        <button class="folder-tab active" id="tab-vehicles" onclick="switchFolder('vehicles')">
-          <span>🚗 Vehicles</span>
-          <span class="tab-badge" id="badge-cnt-vehicles">0</span>
+      <!-- Exact Folder Names as on Disk -->
+      <div class="vms-filter-tabs">
+        <button class="vms-tab-btn active" id="tab-vehicles" onclick="switchFolder('vehicles')">
+          <span>Vehicles</span>
+          <span class="tab-count" id="count-veh">0</span>
         </button>
-        <button class="folder-tab" id="tab-crowd" onclick="switchFolder('crowd')">
-          <span>👥 Crowd</span>
-          <span class="tab-badge" id="badge-cnt-crowd">0</span>
+        <button class="vms-tab-btn" id="tab-crowd" onclick="switchFolder('crowd')">
+          <span>Crowd</span>
+          <span class="tab-count" id="count-crowd">0</span>
         </button>
-        <button class="folder-tab" id="tab-emergency" onclick="switchFolder('emergency')">
-          <span>🚨 Emergency</span>
-          <span class="tab-badge" id="badge-cnt-emergency">0</span>
+        <button class="vms-tab-btn" id="tab-emergency" onclick="switchFolder('emergency')">
+          <span>Emergency</span>
+          <span class="tab-count" id="count-emerg">0</span>
         </button>
+        <button class="vms-tab-btn" id="tab-uploads" onclick="switchFolder('uploads')">
+          <span>Uploads</span>
+          <span class="tab-count" id="count-upload">0</span>
+        </button>
+      </div>
+
+      <!-- Active Folder Clips (Directly clickable pills showing filename + name) -->
+      <div class="vms-clips-container" id="active-folder-clips">
+        <!-- Rendered dynamically for current folder -->
       </div>
     </div>
 
-    <!-- Active Folder Clips (Horizontal Inline Pills) -->
-    <div class="folder-clips-pills" id="active-folder-clips">
-      <!-- Populated dynamically based on active folder tab -->
-    </div>
+    <div class="vms-right">
+      <button class="btn-action" onclick="document.getElementById('file-upload-input').click()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span>Import Video</span>
+      </button>
 
-    <div>
-      <button class="upload-quick-btn" onclick="document.getElementById('file-upload-input').click()">
-        <span>➕ Upload Clip</span>
+      <button class="btn-action btn-emergency-override" onclick="injectEmergency()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>Simulate Siren Signal</span>
+      </button>
+
+      <button class="btn-action btn-emergency-clear" onclick="clearEmergency()">
+        <span>Clear</span>
       </button>
     </div>
   </div>
 
   <input type="file" id="file-upload-input" accept=".mp4,.avi,.mov,.mkv" onchange="handleFileUpload(event)">
 
-  <!-- Main Presentation Grid -->
+  <!-- 3. Primary Workspace Grid -->
   <main>
 
-    <!-- Left: Hero Video Player & Decision Banner -->
-    <div class="video-section">
+    <!-- Left Column: CCTV Stream & Hardware Controller -->
+    <div class="viewport-column">
 
-      <!-- Decision Banner -->
-      <div class="decision-banner normal" id="decision-banner">
-        <div class="signal-light-box">
-          <div class="signal-lamp red" id="lamp-red"></div>
-          <div class="signal-lamp yellow" id="lamp-yellow"></div>
-          <div class="signal-lamp green on" id="lamp-green"></div>
+      <!-- CCTV Viewport Card -->
+      <div class="cctv-card">
+        <div class="cctv-osd-top">
+          <div class="osd-cam-id">
+            <span class="rec-indicator"></span>
+            <span id="osd-feed-title">CAM-01 [NORTH APPROACH - BROADWAY & 5TH]</span>
+          </div>
+          <div style="display:flex; gap: 0.75rem;">
+            <span id="osd-resolution">1920x1080 @ 30 FPS</span>
+            <span id="osd-audio-tag" style="color: #10b981;">16 kHz AUDIO ACTIVE</span>
+          </div>
         </div>
-        <div class="banner-text-box">
-          <span class="banner-badge badge-normal" id="banner-badge">NORMAL FLOW</span>
-          <div class="banner-headline" id="banner-headline">Standard Adaptive Cycle Active</div>
-          <div class="banner-desc" id="banner-desc">Analyzing video feed and audio spectrogram for real-time dispatch.</div>
+
+        <div class="video-viewport">
+          <img src="/video_feed" alt="Real-time Annotated CCTV Stream">
         </div>
-        <div class="phase-timer-pill">
-          <div class="phase-timer-val" id="phase-timer-val">15s</div>
-          <div class="phase-timer-lbl">Phase Duration</div>
+
+        <!-- CCTV Lower Toolbar -->
+        <div class="cctv-toolbar">
+          <div class="cctv-tool-group">
+            <span class="tool-label">Focus:</span>
+            <button class="btn-tool active" id="btn-mode-auto" onclick="setAnalysisMode('auto')">Auto</button>
+            <button class="btn-tool" id="btn-mode-veh" onclick="setAnalysisMode('vehicle')">Vehicles</button>
+            <button class="btn-tool" id="btn-mode-crowd" onclick="setAnalysisMode('crowd')">Pedestrians</button>
+            <button class="btn-tool" id="btn-mode-hybrid" onclick="setAnalysisMode('hybrid')">Hybrid</button>
+          </div>
+
+          <div class="cctv-tool-group">
+            <span class="tool-label">Rate:</span>
+            <button class="btn-tool active" id="btn-spd-1" onclick="setSpeed(1)">1.0x</button>
+            <button class="btn-tool" id="btn-spd-2" onclick="setSpeed(2)">1.5x</button>
+            <button class="btn-tool" id="btn-spd-3" onclick="setSpeed(3)">2.0x</button>
+          </div>
+
+          <div class="cctv-tool-group">
+            <span class="tool-label">Stream:</span>
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: #94a3b8;" id="osd-bitrate">MJPEG · 30 FPS</span>
+          </div>
         </div>
       </div>
 
-      <!-- Hero Video Player -->
-      <div class="video-card">
-        <div class="video-header">
-          <div class="video-title-group">
-            <span style="font-size: 1rem;">📍</span>
-            <strong id="active-scenario-name" style="font-size: 0.95rem;">Active Scenario Stream</strong>
+      <!-- NEMA TS-2 Physical Traffic Controller Cabinet Unit -->
+      <div class="controller-cabinet">
+        
+        <!-- Vehicular 3-Aspect Signal Head -->
+        <div class="signal-head-housing">
+          <div class="signal-hood"></div>
+          <div class="optical-lens red" id="lens-red"></div>
+          <div class="optical-lens yellow" id="lens-yellow"></div>
+          <div class="optical-lens green on" id="lens-green"></div>
+        </div>
+
+        <!-- Pedestrian Head (MUTCD Hand / Walk + Timer) -->
+        <div class="ped-head-housing">
+          <div class="ped-symbol-box hand on" id="ped-icon-box">
+            <!-- SVG Hand Icon (Orange when Stop) -->
+            <svg id="svg-hand" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 11V6a2 2 0 0 0-4 0v5a1 1 0 0 1-2 0V4a2 2 0 0 0-4 0v7a1 1 0 0 1-2 0V7a2 2 0 0 0-4 0v8a7 7 0 0 0 7 7h3a7 7 0 0 0 7-7v-4a2 2 0 0 0-4 0z"></path>
+            </svg>
+            <!-- SVG Walking Figure (White when Walk) -->
+            <svg id="svg-walk" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+              <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"></path>
+            </svg>
           </div>
-          <div class="btn-group-inline">
-            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">FOCUS:</span>
-            <button class="ctrl-btn active" id="btn-mode-auto" onclick="setAnalysisMode('auto')">Auto</button>
-            <button class="ctrl-btn" id="btn-mode-veh" onclick="setAnalysisMode('vehicle')">🚗 Vehicles</button>
-            <button class="ctrl-btn" id="btn-mode-crowd" onclick="setAnalysisMode('crowd')">👥 Crowd</button>
-            <button class="ctrl-btn" id="btn-mode-hybrid" onclick="setAnalysisMode('hybrid')">🔄 Hybrid</button>
+          <div class="ped-countdown-box" id="ped-countdown">15</div>
+        </div>
+
+        <!-- Controller Logic Telemetry -->
+        <div class="controller-logic-box">
+          <div class="phase-badge-row">
+            <span class="phase-status-tag tag-normal" id="ctrl-phase-tag">PHASE 2: GREEN</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">SPLIT ALLOCATION</span>
+          </div>
+          <div class="phase-title-text" id="ctrl-headline">Main Arterial Normal Flow</div>
+          <div class="phase-reason-text" id="ctrl-reason">Autonomous adaptive cycle active based on detector telemetry.</div>
+          
+          <div class="phase-timing-bar-wrapper">
+            <div class="timing-meter">
+              <div class="timing-meter-fill normal" id="timing-fill" style="width: 50%;"></div>
+            </div>
+            <div class="timing-digits" id="timing-digits">15s / 30s</div>
           </div>
         </div>
 
-        <div class="video-feed-wrapper">
-          <img src="/video_feed" alt="Real-Time Annotated AI Stream">
-        </div>
-
-        <div class="controls-bar">
-          <div class="btn-group-inline">
-            <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">SPEED:</span>
-            <button class="ctrl-btn active" id="btn-spd-1" onclick="setSpeed(1)">1.0x Real</button>
-            <button class="ctrl-btn" id="btn-spd-2" onclick="setSpeed(2)">1.5x</button>
-            <button class="ctrl-btn" id="btn-spd-3" onclick="setSpeed(3)">2.0x</button>
-          </div>
-          <div class="btn-group-inline">
-            <button class="ctrl-btn" style="background:#dc2626; color:#fff;" onclick="injectEmergency()">🚨 Inject Siren</button>
-            <button class="ctrl-btn" onclick="clearEmergency()">Clear Alert</button>
-          </div>
-        </div>
       </div>
 
     </div>
 
-    <!-- Right: Telemetry & Analytical Insights -->
-    <div class="telemetry-col">
+    <!-- Right Column: Engineering Telemetry Modules -->
+    <div class="telemetry-column">
 
-      <!-- Card 1: Vehicle Analytics -->
-      <div class="telemetry-card" id="card-vehicles">
-        <div class="telemetry-title">
-          <span>🚗 Vehicle Traffic Analytics</span>
-          <span class="cat-badge cat-vehicles" id="badge-traffic-level">LOW</span>
+      <!-- Module 1: Approach Vehicular Volumetrics -->
+      <div class="module-card">
+        <div class="module-header">
+          <span class="module-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+            Approach Vehicle Volumetrics
+          </span>
+          <span class="module-badge badge-clear" id="badge-traffic-flow">FLOW: NORMAL</span>
         </div>
-        <div class="stat-row">
-          <div class="stat-box">
-            <span class="stat-val" id="val-veh-now">0</span>
-            <span class="stat-lbl">Vehicles in View</span>
+
+        <div class="kpi-matrix">
+          <div class="kpi-cell">
+            <span class="kpi-value" id="val-veh-active">0</span>
+            <span class="kpi-label">Vehicles in Zone</span>
           </div>
-          <div class="stat-box">
-            <span class="stat-val" id="val-veh-total">0</span>
-            <span class="stat-lbl">Total Counted</span>
+          <div class="kpi-cell">
+            <span class="kpi-value" id="val-veh-total">0</span>
+            <span class="kpi-label">Cumulative Volume</span>
           </div>
         </div>
-        <div class="chips-group" id="chips-vehicles">
-          <div class="chip">Cars: 0</div>
-          <div class="chip">Buses: 0</div>
-          <div class="chip">Trucks: 0</div>
-          <div class="chip">Motorcycles: 0</div>
-        </div>
+
+        <!-- Class Breakdown Table -->
+        <table class="class-breakdown-table">
+          <tr>
+            <td>Passenger Cars</td>
+            <td class="col-bar"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-cars" style="width: 0%;"></div></div></td>
+            <td class="col-val" id="cnt-cars">0</td>
+          </tr>
+          <tr>
+            <td>Transit Buses</td>
+            <td class="col-bar"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-buses" style="width: 0%;"></div></div></td>
+            <td class="col-val" id="cnt-buses">0</td>
+          </tr>
+          <tr>
+            <td>Commercial Trucks</td>
+            <td class="col-bar"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-trucks" style="width: 0%;"></div></div></td>
+            <td class="col-val" id="cnt-trucks">0</td>
+          </tr>
+          <tr>
+            <td>Motorcycles / 2-Wheel</td>
+            <td class="col-bar"><div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-motos" style="width: 0%;"></div></div></td>
+            <td class="col-val" id="cnt-motos">0</td>
+          </tr>
+        </table>
       </div>
 
-      <!-- Card 2: Crowd & Pedestrian Analytics -->
-      <div class="telemetry-card" id="card-crowd">
-        <div class="telemetry-title">
-          <span>👥 Crowd & Pedestrian Safety</span>
-          <span class="cat-badge cat-crowd" id="badge-crowd-density">SPARSE</span>
+      <!-- Module 2: Pedestrian Crosswalk Safety -->
+      <div class="module-card">
+        <div class="module-header">
+          <span class="module-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Pedestrian & Crosswalk Safety
+          </span>
+          <span class="module-badge badge-clear" id="badge-crosswalk-status">CROSSWALK: CLEAR</span>
         </div>
-        <div class="stat-row">
-          <div class="stat-box">
-            <span class="stat-val" id="val-ped-now">0</span>
-            <span class="stat-lbl">Pedestrians in View</span>
+
+        <div class="kpi-matrix">
+          <div class="kpi-cell">
+            <span class="kpi-value" id="val-ped-active">0</span>
+            <span class="kpi-label">Active in Crosswalk</span>
           </div>
-          <div class="stat-box">
-            <span class="stat-val" id="val-ped-total">0</span>
-            <span class="stat-lbl">Total Crossings</span>
+          <div class="kpi-cell">
+            <span class="kpi-value" id="val-ped-total">0</span>
+            <span class="kpi-label">Cumulative Pedestrians</span>
           </div>
         </div>
-        <div class="gauge-wrapper">
-          <div class="gauge-header">
+
+        <div style="display:flex; flex-direction:column; gap:0.3rem;">
+          <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-secondary); font-family:var(--font-mono);">
             <span>Crowd Density Index</span>
-            <span id="lbl-crowd-gauge">Sparse</span>
+            <span id="lbl-density-name">SPARSE</span>
           </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-crowd" id="bar-crowd" style="width: 15%;"></div>
+          <div class="segment-gauge">
+            <div class="segment-cell active-sparse" id="seg-sparse">SPARSE</div>
+            <div class="segment-cell" id="seg-moderate">MODERATE</div>
+            <div class="segment-cell" id="seg-crowded">CROWDED</div>
+            <div class="segment-cell" id="seg-surge">SURGE</div>
           </div>
         </div>
-        <div style="font-size: 0.78rem; color: var(--text-muted); display:flex; justify-content:space-between;">
-          <span>Crosswalk Occupied: <strong id="lbl-crosswalk-occ" style="color:#fff;">No</strong></span>
-          <span>Clusters: <strong id="lbl-clusters-cnt" style="color:#38bdf8;">0</strong></span>
+
+        <div style="font-size:0.72rem; color:var(--text-muted); display:flex; justify-content:space-between; border-top:1px solid #162032; padding-top:0.35rem;">
+          <span>Pedestrian Hold Interlock: <strong id="lbl-ped-hold" style="color:#f1f5f9;">DISENGAGED</strong></span>
+          <span>Crowd Clusters: <strong id="lbl-ped-clusters" style="color:#38bdf8;">0</strong></span>
         </div>
       </div>
 
-      <!-- Card 3: AST Audio Siren Telemetry -->
-      <div class="telemetry-card" id="card-audio">
-        <div class="telemetry-title">
-          <span>🔊 AST Audio Siren Detector</span>
-          <span class="cat-badge" id="badge-audio-track">AUDIO ACTIVE</span>
+      <!-- Module 3: AST Acoustic Siren Detector -->
+      <div class="module-card">
+        <div class="module-header">
+          <span class="module-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            AST Acoustic Siren Classifier
+          </span>
+          <span class="module-badge badge-info" id="badge-audio-codec">16 kHz DEMUXED</span>
         </div>
-        <div class="gauge-wrapper">
-          <div class="gauge-header">
-            <span>AST Siren Probability</span>
-            <span id="val-siren-pct">0%</span>
+
+        <div class="gauge-container">
+          <div class="gauge-top-row">
+            <span>Siren Detection Probability</span>
+            <span id="val-siren-pct">0.0%</span>
           </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill fill-siren" id="bar-siren" style="width: 0%;"></div>
+          <div class="siren-track">
+            <div class="threshold-marker" title="Preemption Threshold: 70%"></div>
+            <div class="siren-fill" id="bar-siren"></div>
           </div>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-muted);">
-          <span>State: <strong id="val-audio-state" style="color:#fff;">NO_SIREN</strong></span>
-          <span>Loudness: <strong id="val-audio-dbfs" style="color:#38bdf8;">-60 dBFS</strong></span>
+
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-secondary); font-family:var(--font-mono); border-top:1px solid #162032; padding-top:0.35rem;">
+          <span>Acoustic RMS: <strong id="val-audio-rms" style="color:#f1f5f9;">-60 dBFS</strong></span>
+          <span>Preemption State: <strong id="val-siren-state" style="color:#f1f5f9;">NO_SIREN</strong></span>
+        </div>
+      </div>
+
+      <!-- Module 4: Operations Audit Log -->
+      <div class="module-card">
+        <div class="module-header">
+          <span class="module-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            Operations Audit Log
+          </span>
+          <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">EVENT BUS</span>
+        </div>
+
+        <div class="audit-terminal" id="audit-log-box">
+          <div class="log-line">
+            <span class="log-ts">[--:--:--]</span>
+            <span class="log-src SYSTEM">[SYSTEM]</span>
+            <span class="log-msg">Connecting to Traffic Operations Controller...</span>
+          </div>
         </div>
       </div>
 
@@ -893,52 +1361,54 @@
 
   </main>
 
-  <!-- Folder Explorer Modal -->
-  <div class="folder-modal-overlay" id="folder-modal" onclick="closeFolderModal()">
-    <div class="folder-modal" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <div style="display:flex; align-items:center; gap:0.6rem;">
-          <span style="font-size:1.3rem;">📁</span>
-          <h3 style="font-size:1.05rem; font-weight:800; color:#fff;">Scenario Folder Library</h3>
-        </div>
-        <button class="close-modal-btn" onclick="closeFolderModal()">&times;</button>
+  <!-- Folder Explorer Modal Dialog -->
+  <div class="modal-overlay" id="folder-modal" onclick="closeFolderModal()">
+    <div class="modal-window" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <h3>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Folder
+        </h3>
+        <button class="modal-close-btn" onclick="closeFolderModal()">&times;</button>
       </div>
       <div class="modal-body">
-
+        
         <!-- Vehicles Folder -->
-        <div class="folder-section">
-          <div class="folder-section-title">
-            <span>🚗 data/videos/vehicles/</span>
-            <small style="color:var(--text-muted);" id="modal-cnt-vehicles">0 clips</small>
+        <div class="modal-folder-group">
+          <div class="modal-folder-label">
+            <span>data/videos/vehicles/</span>
+            <span id="modal-cnt-veh">0 clips</span>
           </div>
-          <div class="folder-grid" id="modal-grid-vehicles"></div>
+          <div class="modal-clip-grid" id="modal-grid-vehicles"></div>
         </div>
 
         <!-- Crowd Folder -->
-        <div class="folder-section">
-          <div class="folder-section-title">
-            <span>👥 data/videos/crowd/</span>
-            <small style="color:var(--text-muted);" id="modal-cnt-crowd">0 clips</small>
+        <div class="modal-folder-group">
+          <div class="modal-folder-label">
+            <span>data/videos/crowd/</span>
+            <span id="modal-cnt-crowd">0 clips</span>
           </div>
-          <div class="folder-grid" id="modal-grid-crowd"></div>
+          <div class="modal-clip-grid" id="modal-grid-crowd"></div>
         </div>
 
         <!-- Emergency Folder -->
-        <div class="folder-section">
-          <div class="folder-section-title">
-            <span>🚨 data/videos/emergency/</span>
-            <small style="color:var(--text-muted);" id="modal-cnt-emergency">0 clips</small>
+        <div class="modal-folder-group">
+          <div class="modal-folder-label">
+            <span>data/videos/emergency/</span>
+            <span id="modal-cnt-emerg">0 clips</span>
           </div>
-          <div class="folder-grid" id="modal-grid-emergency"></div>
+          <div class="modal-clip-grid" id="modal-grid-emergency"></div>
         </div>
 
         <!-- Uploads Folder -->
-        <div class="folder-section" id="modal-section-uploads">
-          <div class="folder-section-title">
-            <span>📤 data/videos/uploads/</span>
-            <small style="color:var(--text-muted);" id="modal-cnt-uploads">0 clips</small>
+        <div class="modal-folder-group">
+          <div class="modal-folder-label">
+            <span>data/videos/uploads/</span>
+            <span id="modal-cnt-upload">0 clips</span>
           </div>
-          <div class="folder-grid" id="modal-grid-uploads"></div>
+          <div class="modal-clip-grid" id="modal-grid-uploads"></div>
         </div>
 
       </div>
@@ -946,26 +1416,28 @@
   </div>
 
   <script>
-    // Live Clock
+    // System Clock
     function updateClock() {
       const now = new Date();
-      document.getElementById('pill-clock').textContent = now.toTimeString().split(' ')[0];
+      const utcString = now.toUTCString().split(' ').slice(1, 5).join(' ') + ' UTC';
+      document.getElementById('pill-clock').textContent = utcString;
     }
     setInterval(updateClock, 1000);
     updateClock();
 
     let allScenarios = [];
     let currentScenarioId = "";
-    let activeFolderTab = "vehicles";
+    let activeFolder = "vehicles";
 
-    // Fetch and render scenario catalog
+    // Load Scenarios Catalog
     async function loadScenarios() {
       try {
         const res = await fetch('/api/scenarios');
         if (!res.ok) return;
         allScenarios = await res.json();
         updateFolderCounts();
-        renderActiveFolderPills();
+        renderActiveFolderClips();
+        populateModalGrids();
       } catch (err) {
         console.error('Failed to load scenarios:', err);
       }
@@ -975,48 +1447,52 @@
       const vehClips = allScenarios.filter(s => s.category === 'vehicles');
       const crowdClips = allScenarios.filter(s => s.category === 'crowd');
       const emergClips = allScenarios.filter(s => s.category === 'emergency');
-      const uploadClips = allScenarios.filter(s => s.category === 'upload');
+      const uploadClips = allScenarios.filter(s => s.category === 'uploads' || s.category === 'upload');
 
-      document.getElementById('badge-cnt-vehicles').textContent = vehClips.length;
-      document.getElementById('badge-cnt-crowd').textContent = crowdClips.length;
-      document.getElementById('badge-cnt-emergency').textContent = emergClips.length;
+      document.getElementById('count-veh').textContent = vehClips.length;
+      document.getElementById('count-crowd').textContent = crowdClips.length;
+      document.getElementById('count-emerg').textContent = emergClips.length;
+      document.getElementById('count-upload').textContent = uploadClips.length;
 
-      document.getElementById('modal-cnt-vehicles').textContent = `${vehClips.length} clips`;
+      document.getElementById('modal-cnt-veh').textContent = `${vehClips.length} clips`;
       document.getElementById('modal-cnt-crowd').textContent = `${crowdClips.length} clips`;
-      document.getElementById('modal-cnt-emergency').textContent = `${emergClips.length} clips`;
-      document.getElementById('modal-cnt-uploads').textContent = `${uploadClips.length} clips`;
+      document.getElementById('modal-cnt-emerg').textContent = `${emergClips.length} clips`;
+      document.getElementById('modal-cnt-upload').textContent = `${uploadClips.length} clips`;
     }
 
     function switchFolder(folderName) {
-      activeFolderTab = folderName;
-      document.querySelectorAll('.folder-tab').forEach(t => t.classList.remove('active'));
-      const activeTab = document.getElementById('tab-' + folderName);
-      if (activeTab) activeTab.classList.add('active');
-      renderActiveFolderPills();
+      activeFolder = folderName;
+      document.querySelectorAll('.vms-tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('tab-' + folderName);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderActiveFolderClips();
     }
 
-    function renderActiveFolderPills() {
+    // Render clip pills directly in the bar for the active folder
+    function renderActiveFolderClips() {
       const container = document.getElementById('active-folder-clips');
+      if (!container) return;
       container.innerHTML = '';
 
-      const filtered = allScenarios.filter(s => s.category === activeFolderTab);
-      if (filtered.length === 0) {
-        container.innerHTML = `<span style="font-size:0.75rem; color:#64748b; font-style:italic;">No clips in ${activeFolderTab} folder</span>`;
+      const targetCats = (activeFolder === 'uploads' || activeFolder === 'upload') ? ['uploads', 'upload'] : [activeFolder];
+      const clips = allScenarios.filter(s => targetCats.includes(s.category));
+
+      if (clips.length === 0) {
+        container.innerHTML = `<span style="font-size:0.72rem; color:#64748b; font-family:var(--font-mono); padding:0.25rem 0.5rem;">[No clips found in data/videos/${activeFolder}/]</span>`;
         return;
       }
 
-      filtered.forEach(s => {
-        const pill = document.createElement('button');
-        pill.className = 'clip-pill ' + (s.id === currentScenarioId ? 'active' : '');
-        pill.onclick = () => selectScenario(s.id);
-
-        const icon = s.category === 'vehicles' ? '🚗' : (s.category === 'crowd' ? '👥' : '🚨');
-        pill.innerHTML = `
-          <span>${icon}</span>
-          <span>${s.name}</span>
-          ${s.has_audio ? '<span style="font-size:0.68rem; color:#10b981;">🔊</span>' : ''}
+      clips.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'clip-chip ' + (s.id === currentScenarioId ? 'active' : '');
+        btn.onclick = () => selectScenario(s.id);
+        btn.title = `${s.name} (${s.file_name})`;
+        btn.innerHTML = `
+          <span class="clip-chip-filename">${s.file_name}</span>
+          <span style="color:#f1f5f9; font-weight:600;">${s.name}</span>
+          ${s.has_audio ? '<span class="clip-chip-audio">16kHz Audio</span>' : ''}
         `;
-        container.appendChild(pill);
+        container.appendChild(btn);
       });
     }
 
@@ -1030,11 +1506,23 @@
         if (res.ok) {
           currentScenarioId = scenarioId;
           const found = allScenarios.find(s => s.id === scenarioId);
-          if (found && found.category !== activeFolderTab && found.category !== 'upload') {
-            switchFolder(found.category);
-          } else {
-            renderActiveFolderPills();
+          if (found) {
+            const folderName = (found.category === 'upload') ? 'uploads' : found.category;
+            if (folderName !== activeFolder) {
+              switchFolder(folderName);
+            } else {
+              renderActiveFolderClips();
+            }
+            document.getElementById('osd-feed-title').textContent = `CAM · ${found.name.toUpperCase()} (${found.file_name})`;
+            document.getElementById('osd-audio-tag').textContent = found.has_audio ? '16 kHz AUDIO DEMUXED' : 'AUDIO: MUTE';
+            document.getElementById('osd-audio-tag').style.color = found.has_audio ? '#10b981' : '#64748b';
           }
+          // Refresh video feed stream connection immediately
+          const feedImg = document.querySelector('.video-viewport img');
+          if (feedImg) {
+            feedImg.src = '/video_feed?t=' + Date.now();
+          }
+          populateModalGrids();
           closeFolderModal();
         }
       } catch (err) {
@@ -1042,7 +1530,17 @@
       }
     }
 
-    // Modal Folder Explorer
+    // Auto-reconnect video feed if browser stream connection drops
+    const videoStreamImg = document.querySelector('.video-viewport img');
+    if (videoStreamImg) {
+      videoStreamImg.onerror = function() {
+        setTimeout(() => {
+          videoStreamImg.src = '/video_feed?t=' + Date.now();
+        }, 400);
+      };
+    }
+
+    // Modal Explorer
     function openFolderModal() {
       populateModalGrids();
       document.getElementById('folder-modal').classList.add('open');
@@ -1053,37 +1551,44 @@
     }
 
     function populateModalGrids() {
-      const categories = ['vehicles', 'crowd', 'emergency', 'uploads'];
+      const categories = [
+        { key: 'vehicles', folderName: 'vehicles', gridId: 'modal-grid-vehicles' },
+        { key: 'crowd', folderName: 'crowd', gridId: 'modal-grid-crowd' },
+        { key: 'emergency', folderName: 'emergency', gridId: 'modal-grid-emergency' },
+        { key: 'uploads', folderName: 'uploads', gridId: 'modal-grid-uploads' }
+      ];
+
       categories.forEach(cat => {
-        const grid = document.getElementById('modal-grid-' + cat);
+        const grid = document.getElementById(cat.gridId);
         if (!grid) return;
         grid.innerHTML = '';
 
-        const targetCat = cat === 'uploads' ? 'upload' : cat;
-        const clips = allScenarios.filter(s => s.category === targetCat);
+        const targetCats = (cat.key === 'uploads') ? ['uploads', 'upload'] : [cat.key];
+        const clips = allScenarios.filter(s => targetCats.includes(s.category));
+
         if (clips.length === 0) {
-          grid.innerHTML = `<span style="font-size:0.75rem; color:#64748b;">No clips present</span>`;
+          grid.innerHTML = `<span style="font-size:0.72rem; color:#64748b; font-family:var(--font-mono);">No clips in data/videos/${cat.folderName}/</span>`;
           return;
         }
 
         clips.forEach(s => {
-          const card = document.createElement('div');
-          card.className = 'folder-card ' + (s.id === currentScenarioId ? 'active' : '');
-          card.onclick = () => selectScenario(s.id);
-          card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong style="font-size:0.82rem; color:#fff;">${s.name}</strong>
-              <small style="font-size:0.68rem; color:${s.has_audio ? '#10b981' : '#64748b'};">
-                ${s.has_audio ? '🔊 Audio' : '🔇 Mute'}
-              </small>
+          const item = document.createElement('div');
+          item.className = 'modal-clip-item ' + (s.id === currentScenarioId ? 'active' : '');
+          item.onclick = () => selectScenario(s.id);
+          item.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.25rem;">
+              <strong style="color:#f1f5f9; font-size:0.8rem;">${s.name}</strong>
+              ${s.has_audio ? '<span class="clip-chip-audio">16kHz Audio</span>' : '<span style="color:#64748b; font-size:0.65rem; font-family:var(--font-mono);">Mute</span>'}
             </div>
-            <div style="font-size:0.72rem; color:var(--text-muted);">${s.file_name}</div>
+            <div style="font-family:var(--font-mono); font-size:0.72rem; color:#38bdf8;">${s.file_name}</div>
+            <div style="font-size:0.68rem; color:#94a3b8; margin-top:0.25rem;">${s.description || ''}</div>
           `;
-          grid.appendChild(card);
+          grid.appendChild(item);
         });
       });
     }
 
+    // Video Upload
     async function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -1099,6 +1604,7 @@
         if (res.ok) {
           const data = await res.json();
           currentScenarioId = data.scenario.id;
+          activeFolder = 'uploads';
           await loadScenarios();
         }
       } catch (err) {
@@ -1106,7 +1612,7 @@
       }
     }
 
-    // Analysis Mode Controls
+    // Analysis Mode & Speed Controls
     async function setAnalysisMode(mode) {
       try {
         await fetch('/api/control/mode', {
@@ -1114,17 +1620,14 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ mode })
         });
-        document.querySelectorAll('.btn-group-inline .ctrl-btn').forEach(b => {
+        document.querySelectorAll('.cctv-tool-group .btn-tool').forEach(b => {
           if (b.id.startsWith('btn-mode-')) b.classList.remove('active');
         });
-        const btn = document.getElementById('btn-mode-' + (mode === 'vehicle' ? 'veh' : mode));
-        if (btn) btn.classList.add('active');
-      } catch (err) {
-        console.error('Failed to set mode:', err);
-      }
+        const activeBtn = document.getElementById('btn-mode-' + (mode === 'vehicle' ? 'veh' : mode));
+        if (activeBtn) activeBtn.classList.add('active');
+      } catch (err) {}
     }
 
-    // Speed Controls
     async function setSpeed(stride) {
       try {
         await fetch('/api/control/speed', {
@@ -1135,12 +1638,9 @@
         document.getElementById('btn-spd-1').classList.toggle('active', stride === 1);
         document.getElementById('btn-spd-2').classList.toggle('active', stride === 2);
         document.getElementById('btn-spd-3').classList.toggle('active', stride === 3);
-      } catch (err) {
-        console.error('Failed to set speed:', err);
-      }
+      } catch (err) {}
     }
 
-    // Emergency Injection
     async function injectEmergency() {
       try {
         await fetch('/api/control/inject', {
@@ -1148,20 +1648,16 @@
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ vehicle_type: 'Ambulance', has_emergency: true })
         });
-      } catch (err) {
-        console.error('Emergency injection failed:', err);
-      }
+      } catch (err) {}
     }
 
     async function clearEmergency() {
       try {
         await fetch('/api/control/clear-inject', { method: 'POST' });
-      } catch (err) {
-        console.error('Clear emergency failed:', err);
-      }
+      } catch (err) {}
     }
 
-    // Telemetry Polling Loop (~10Hz)
+    // Live Telemetry Poller (~100ms)
     async function pollStatus() {
       try {
         const res = await fetch('/api/status');
@@ -1171,121 +1667,164 @@
       } catch (err) {}
     }
 
+    let lastKnownEventCount = 0;
+
     function updateUI(data) {
       if (!data || !data.scenario) return;
 
-      // Header pills
-      document.getElementById('pill-fps').textContent = `FPS: ${data.fps || '--'}`;
-      document.getElementById('pill-device').textContent = `DEVICE: ${data.device || 'CPU'}`;
-      document.getElementById('pill-mode').textContent = `MODE: ${(data.effective_mode || 'AUTO').toUpperCase()}`;
+      // Header Diagnostics
+      document.getElementById('pill-fps').textContent = (data.fps || '--');
+      document.getElementById('pill-device').textContent = (data.device || 'CPU');
+      document.getElementById('pill-mode').textContent = (data.effective_mode || 'AUTO').toUpperCase();
 
-      // Update active scenario name
-      if (data.scenario.name) {
-        document.getElementById('active-scenario-name').textContent = data.scenario.name;
-        if (currentScenarioId !== data.scenario.id) {
-          currentScenarioId = data.scenario.id;
-          const found = allScenarios.find(s => s.id === currentScenarioId);
-          if (found && found.category !== activeFolderTab && found.category !== 'upload') {
-            switchFolder(found.category);
-          } else {
-            renderActiveFolderPills();
-          }
+      // Current Scenario synchronization
+      if (data.scenario.id && data.scenario.id !== currentScenarioId) {
+        currentScenarioId = data.scenario.id;
+        const scenCategory = (data.scenario.category === 'upload') ? 'uploads' : data.scenario.category;
+        if (scenCategory && scenCategory !== activeFolder) {
+          switchFolder(scenCategory);
+        } else {
+          renderActiveFolderClips();
         }
+        document.getElementById('osd-feed-title').textContent = `CAM · ${data.scenario.name.toUpperCase()} (${data.scenario.file_name || ''})`;
+        document.getElementById('osd-audio-tag').textContent = data.scenario.has_audio ? '16 kHz AUDIO DEMUXED' : 'AUDIO: MUTE';
+        document.getElementById('osd-audio-tag').style.color = data.scenario.has_audio ? '#10b981' : '#64748b';
       }
 
-      // Decision & Signal Light
-      const banner = document.getElementById('decision-banner');
-      const badge = document.getElementById('banner-badge');
-      const headline = document.getElementById('banner-headline');
-      const desc = document.getElementById('banner-desc');
-      const timerVal = document.getElementById('phase-timer-val');
-
+      // Hardware Signal Controller Lamps
       const decision = data.decision || {};
-      const status = decision.system_status || 'NORMAL';
       const phase = decision.signal_phase || 'GREEN';
+      const status = decision.system_status || 'NORMAL';
 
-      // Signal Lamps
-      const redLamp = document.getElementById('lamp-red');
-      const yellowLamp = document.getElementById('lamp-yellow');
-      const greenLamp = document.getElementById('lamp-green');
-      redLamp.className = 'signal-lamp red' + (phase === 'RED' || phase === 'PEDESTRIAN_WALK' ? ' on' : '');
-      yellowLamp.className = 'signal-lamp yellow' + (phase === 'YELLOW' ? ' on' : '');
-      greenLamp.className = 'signal-lamp green' + (phase === 'GREEN' || phase === 'EMERGENCY_CLEARANCE' ? ' on' : '');
+      const redLens = document.getElementById('lens-red');
+      const yellowLens = document.getElementById('lens-yellow');
+      const greenLens = document.getElementById('lens-green');
 
-      // Banner Styling
-      if (status === 'EMERGENCY_PREEMPTION') {
-        banner.className = 'decision-banner emergency';
-        badge.className = 'banner-badge badge-emergency';
-        badge.textContent = 'EMERGENCY PREEMPTION';
-      } else if (status === 'PEDESTRIAN_CROSSING') {
-        banner.className = 'decision-banner pedestrian';
-        badge.className = 'banner-badge badge-pedestrian';
-        badge.textContent = 'PEDESTRIAN WALK PHASE';
-      } else if (status === 'CONGESTION_PRIORITY') {
-        banner.className = 'decision-banner congestion';
-        badge.className = 'banner-badge badge-congestion';
-        badge.textContent = 'CONGESTION EXTENSION';
+      redLens.className = 'optical-lens red' + (phase === 'RED' || phase === 'PEDESTRIAN_WALK' ? ' on' : '');
+      yellowLens.className = 'optical-lens yellow' + (phase === 'YELLOW' ? ' on' : '');
+      greenLens.className = 'optical-lens green' + (phase === 'GREEN' || phase === 'EMERGENCY_CLEARANCE' ? ' on' : '');
+
+      // Pedestrian Head & Countdown
+      const pedIconBox = document.getElementById('ped-icon-box');
+      const svgHand = document.getElementById('svg-hand');
+      const svgWalk = document.getElementById('svg-walk');
+      const pedCountdown = document.getElementById('ped-countdown');
+
+      const isWalkPhase = (phase === 'PEDESTRIAN_WALK');
+      if (isWalkPhase) {
+        pedIconBox.className = 'ped-symbol-box walk on';
+        svgHand.style.display = 'none';
+        svgWalk.style.display = 'block';
+        pedCountdown.className = 'ped-countdown-box active';
       } else {
-        banner.className = 'decision-banner normal';
-        badge.className = 'banner-badge badge-normal';
-        badge.textContent = 'NORMAL TRAFFIC CYCLE';
+        pedIconBox.className = 'ped-symbol-box hand on';
+        svgHand.style.display = 'block';
+        svgWalk.style.display = 'none';
+        pedCountdown.className = 'ped-countdown-box';
+      }
+      pedCountdown.textContent = decision.recommended_duration_sec || 15;
+
+      // Controller Telemetry Tag & Reason
+      const tag = document.getElementById('ctrl-phase-tag');
+      const timingFill = document.getElementById('timing-fill');
+      
+      if (status === 'EMERGENCY_PREEMPTION') {
+        tag.className = 'phase-status-tag tag-emergency';
+        tag.textContent = 'EMERGENCY CLEARANCE';
+        timingFill.className = 'timing-meter-fill emergency';
+      } else if (status === 'PEDESTRIAN_CROSSING') {
+        tag.className = 'phase-status-tag tag-pedestrian';
+        tag.textContent = 'PEDESTRIAN WALK';
+        timingFill.className = 'timing-meter-fill pedestrian';
+      } else if (status === 'CONGESTION_PRIORITY') {
+        tag.className = 'phase-status-tag tag-amber';
+        tag.textContent = 'QUEUE EXTENSION';
+        timingFill.className = 'timing-meter-fill normal';
+      } else {
+        tag.className = 'phase-status-tag tag-normal';
+        tag.textContent = 'ADAPTIVE CYCLE';
+        timingFill.className = 'timing-meter-fill normal';
       }
 
-      headline.textContent = decision.headline || 'Adaptive Monitoring Active';
-      desc.textContent = decision.recommendation || '';
-      timerVal.textContent = (decision.recommended_duration_sec || 15) + 's';
+      document.getElementById('ctrl-headline').textContent = decision.headline || 'Adaptive Phase Active';
+      document.getElementById('ctrl-reason').textContent = decision.recommendation || '';
+      document.getElementById('timing-digits').textContent = `${decision.recommended_duration_sec || 15}s allocated`;
 
       // Vehicle Telemetry
       const veh = data.vehicles || {};
-      document.getElementById('val-veh-now').textContent = veh.visible_now || 0;
+      document.getElementById('val-veh-active').textContent = veh.visible_now || 0;
       document.getElementById('val-veh-total').textContent = veh.total_unique || 0;
+
       const lvl = veh.level || 'LOW';
-      const lvlBadge = document.getElementById('badge-traffic-level');
-      lvlBadge.textContent = lvl;
-      lvlBadge.className = 'cat-badge ' + (lvl === 'HIGH' ? 'cat-emergency' : (lvl === 'MEDIUM' ? 'cat-upload' : 'cat-vehicles'));
+      const flowBadge = document.getElementById('badge-traffic-flow');
+      flowBadge.textContent = `FLOW: ${lvl}`;
+      flowBadge.className = 'module-badge ' + (lvl === 'HIGH' ? 'badge-alert' : (lvl === 'MEDIUM' ? 'badge-warn' : 'badge-clear'));
 
       const cls = veh.by_class || {};
-      document.getElementById('chips-vehicles').innerHTML = `
-        <div class="chip">🚗 Cars: ${cls.car || 0}</div>
-        <div class="chip">🚌 Buses: ${cls.bus || 0}</div>
-        <div class="chip">🚛 Trucks: ${cls.truck || 0}</div>
-        <div class="chip">🏍️ Bikes: ${cls.motorcycle || 0}</div>
-      `;
+      const totalInView = Math.max(1, veh.visible_now || 1);
+      document.getElementById('cnt-cars').textContent = cls.car || 0;
+      document.getElementById('bar-cars').style.width = Math.min(100, Math.round(((cls.car || 0) / totalInView) * 100)) + '%';
 
-      // Crowd Telemetry
+      document.getElementById('cnt-buses').textContent = cls.bus || 0;
+      document.getElementById('bar-buses').style.width = Math.min(100, Math.round(((cls.bus || 0) / totalInView) * 100)) + '%';
+
+      document.getElementById('cnt-trucks').textContent = cls.truck || 0;
+      document.getElementById('bar-trucks').style.width = Math.min(100, Math.round(((cls.truck || 0) / totalInView) * 100)) + '%';
+
+      document.getElementById('cnt-motos').textContent = cls.motorcycle || 0;
+      document.getElementById('bar-motos').style.width = Math.min(100, Math.round(((cls.motorcycle || 0) / totalInView) * 100)) + '%';
+
+      // Pedestrian Telemetry
       const crowd = data.crowd || {};
-      document.getElementById('val-ped-now').textContent = crowd.headcount || 0;
+      document.getElementById('val-ped-active').textContent = crowd.headcount || 0;
       document.getElementById('val-ped-total').textContent = crowd.cumulative || 0;
+
+      const crosswalkOcc = crowd.crosswalk_occupied;
+      const crosswalkBadge = document.getElementById('badge-crosswalk-status');
+      crosswalkBadge.textContent = crosswalkOcc ? 'CROSSWALK: OCCUPIED' : 'CROSSWALK: CLEAR';
+      crosswalkBadge.className = 'module-badge ' + (crosswalkOcc ? 'badge-warn' : 'badge-clear');
+
       const density = crowd.density_level || 'SPARSE';
-      document.getElementById('badge-crowd-density').textContent = density;
-      document.getElementById('lbl-crowd-gauge').textContent = density;
+      document.getElementById('lbl-density-name').textContent = density;
 
-      let crowdPct = 15;
-      if (density === 'MODERATE') crowdPct = 45;
-      else if (density === 'CROWDED') crowdPct = 75;
-      else if (density === 'SURGE_RISK') crowdPct = 100;
-      document.getElementById('bar-crowd').style.width = crowdPct + '%';
+      document.getElementById('seg-sparse').className = 'segment-cell ' + (density === 'SPARSE' ? 'active-sparse' : '');
+      document.getElementById('seg-moderate').className = 'segment-cell ' + (density === 'MODERATE' ? 'active-moderate' : '');
+      document.getElementById('seg-crowded').className = 'segment-cell ' + (density === 'CROWDED' ? 'active-crowded' : '');
+      document.getElementById('seg-surge').className = 'segment-cell ' + (density === 'SURGE_RISK' ? 'active-surge' : '');
 
-      document.getElementById('lbl-crosswalk-occ').textContent = crowd.crosswalk_occupied ? 'YES (Active)' : 'No';
-      document.getElementById('lbl-crosswalk-occ').style.color = crowd.crosswalk_occupied ? '#f59e0b' : '#fff';
-      document.getElementById('lbl-clusters-cnt').textContent = crowd.cluster_count || 0;
+      document.getElementById('lbl-ped-hold').textContent = crosswalkOcc ? 'ENGAGED (HOLDING RED)' : 'DISENGAGED';
+      document.getElementById('lbl-ped-hold').style.color = crosswalkOcc ? '#f59e0b' : '#34d399';
+      document.getElementById('lbl-ped-clusters').textContent = crowd.cluster_count || 0;
 
-      // Audio Telemetry
+      // Audio Siren Telemetry
       const audio = data.audio || {};
       const sirenPct = Math.round((audio.confidence || 0) * 100);
-      document.getElementById('val-siren-pct').textContent = sirenPct + '%';
-      document.getElementById('bar-siren').style.width = sirenPct + '%';
-      document.getElementById('val-audio-state').textContent = audio.state || 'NO_SIREN';
-      document.getElementById('val-audio-state').style.color = audio.emergency_active ? '#ef4444' : '#fff';
-      document.getElementById('val-audio-dbfs').textContent = (audio.loudness_dbfs || -60).toFixed(1) + ' dBFS';
+      document.getElementById('val-siren-pct').textContent = (audio.confidence * 100).toFixed(1) + '%';
+      
+      const sirenBar = document.getElementById('bar-siren');
+      sirenBar.style.width = sirenPct + '%';
+      sirenBar.className = 'siren-fill' + (audio.emergency_active ? ' triggered' : '');
 
-      const audioBadge = document.getElementById('badge-audio-track');
-      if (audio.has_audio_track) {
-        audioBadge.textContent = 'AUDIO ACTIVE';
-        audioBadge.className = 'cat-badge cat-vehicles';
-      } else {
-        audioBadge.textContent = 'NO SOUNDTRACK';
-        audioBadge.className = 'cat-badge cat-crowd';
+      document.getElementById('val-audio-rms').textContent = (audio.loudness_dbfs || -60).toFixed(1) + ' dBFS';
+      document.getElementById('val-siren-state').textContent = audio.state || 'NO_SIREN';
+      document.getElementById('val-siren-state').style.color = audio.emergency_active ? '#ef4444' : '#f1f5f9';
+
+      // Operations Audit Log Terminal
+      if (data.events && data.events.length > 0 && data.events.length !== lastKnownEventCount) {
+        lastKnownEventCount = data.events.length;
+        const logBox = document.getElementById('audit-log-box');
+        logBox.innerHTML = '';
+        data.events.forEach(evt => {
+          const row = document.createElement('div');
+          row.className = 'log-line';
+          row.innerHTML = `
+            <span class="log-ts">[${evt.timestamp}]</span>
+            <span class="log-src ${evt.source}">[${evt.source}]</span>
+            <span class="log-msg">${evt.message}</span>
+          `;
+          logBox.appendChild(row);
+        });
+        logBox.scrollTop = logBox.scrollHeight;
       }
     }
 
