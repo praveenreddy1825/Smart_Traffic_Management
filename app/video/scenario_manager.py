@@ -75,12 +75,15 @@ class ScenarioManager:
         for cat, folder in category_folders:
             if not folder.is_dir():
                 continue
-            for video_file in sorted(folder.glob("*.mp4")):
+            video_files = []
+            for ext in ("*.mp4", "*.mov", "*.avi", "*.mkv", "*.MP4", "*.MOV"):
+                video_files.extend(folder.glob(ext))
+            for video_file in sorted(video_files, key=lambda f: f.name.lower()):
                 if video_file.name in seen_files:
                     continue
                 seen_files.add(video_file.name)
 
-                has_wav = video_file.with_suffix(".wav").is_file()
+                has_wav = video_file.with_suffix(".wav").is_file() or video_file.with_suffix(".mp3").is_file()
                 name = FRIENDLY_NAMES.get(video_file.name, video_file.stem.replace("_", " ").title())
                 s_id = f"{cat}_{video_file.stem}"
 

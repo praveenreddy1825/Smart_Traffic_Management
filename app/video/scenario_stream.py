@@ -27,15 +27,21 @@ logger = get_logger(__name__)
 
 def _extract_audio_from_file(video_path: Path, target_sr: int = 16000) -> Optional[np.ndarray]:
     """Extract audio track from an MP4 file or companion WAV as 16kHz mono float32."""
-    # 1. Check for companion WAV with same name
-    companion_wav = video_path.with_suffix(".wav")
-    if companion_wav.is_file():
+    # 1. Check for companion audio file with same name (.wav, .mp3)
+    companion_audio = None
+    for cand_ext in (".wav", ".mp3", ".m4a"):
+        cand = video_path.with_suffix(cand_ext)
+        if cand.is_file():
+            companion_audio = cand
+            break
+
+    if companion_audio and companion_audio.is_file():
         try:
-            data, sr = sf.read(str(companion_wav), dtype="float32")
+            data, sr = sf.read(str(companion_audio), dtype="float32")
             if data.ndim > 1:
                 data = np.mean(data, axis=1)
             if sr != target_sr:
-                # Simple linear resample if rate differs
+                # Resample to target rate
                 num_target_samples = int(len(data) * target_sr / sr)
                 data = np.interp(
                     np.linspace(0.0, 1.0, num_target_samples, endpoint=False),
@@ -46,7 +52,7 @@ def _extract_audio_from_file(video_path: Path, target_sr: int = 16000) -> Option
                         video_path.name, len(data), len(data) / target_sr)
             return data
         except Exception as err:
-            logger.warning("Could not read companion audio %s: %s", companion_wav, err)
+            logger.warning("Could not read companion audio %s: %s", companion_audio, err)
 
     # 2. Extract embedded audio stream from video container via PyAV
     try:
