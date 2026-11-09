@@ -248,19 +248,7 @@ class PipelineManager:
                     except Exception as err:
                         logger.debug("Audio model error: %s", err)
 
-                # 3. Vision Detection & ByteTrack tracking (single video stream -> blazing fast!)
-                detections = self.detector.track(frame.image)
-
-                # Separate vehicles and pedestrians
-                veh_detections = [d for d in detections if d.class_name in self.vehicle_classes]
-                crowd_detections = [d for d in detections if d.class_name == "person"]
-
-                # 4. Update Analytics
-                counting_res = self.counter.update(veh_detections, frame.index)
-                traffic_rep = self.traffic_analyzer.update(counting_res, frame.timestamp_sec)
-                crowd_rep = self.crowd_analyzer.update(detections, frame.index, frame.timestamp_sec)
-
-                # 5. Multimodal Decision Engine
+                # Determine effective analysis mode
                 with self.lock:
                     scenario_meta = self.scenario_manager.active_scenario
                     active_mode = self.active_mode
@@ -269,7 +257,6 @@ class PipelineManager:
                     )
                     emerg_label = self.injected_label or ("Ambulance" if has_visual_emerg else None)
 
-                # Determine effective analysis mode
                 effective_mode = active_mode
                 if active_mode == "auto":
                     if scenario_meta and scenario_meta.category == "crowd":
@@ -278,8 +265,25 @@ class PipelineManager:
                         effective_mode = "vehicle"
                     elif scenario_meta and scenario_meta.category == "emergency":
                         effective_mode = "emergency"
-                    else:
-                        effective_mode = "crowd" if crowd_rep.headcount > traffic_rep.visible_now else "vehicle"
+
+                # 3. Vision Detection & ByteTrack tracking (with crowd multi-scale boost)
+                is_crowd_scene = (effective_mode == "crowd") or (scenario_meta is not None and scenario_meta.category == "crowd")
+                detections = self.detector.track(frame.image, crowd_mode=is_crowd_scene)
+
+                # Separate vehicles and pedestrians
+                veh_detections = [d for d in detections if d.class_name in self.vehicle_classes]
+                crowd_detections = [d for d in detections if d.class_name == "person"]
+
+                # 4. Update Analytics
+                counting_res = self.counter.update(veh_detections, frame.index)
+                traffic_rep = self.traffic_analyzer.update(counting_res, frame.timestamp_sec)
+                crowd_rep = self.crowd_analyzer.update(
+                    detections, frame.index, frame.timestamp_sec, frame_shape=frame.image.shape
+                )
+
+                # 5. Multimodal Decision Engine
+                if active_mode == "auto" and effective_mode not in ("crowd", "vehicle", "emergency"):
+                    effective_mode = "crowd" if crowd_rep.headcount > traffic_rep.visible_now else "vehicle"
 
                 decision = self.decision_engine.evaluate(
                     vehicle_report=traffic_rep,
@@ -345,6 +349,8 @@ class PipelineManager:
                         "headcount": crowd_rep.headcount,
                         "cumulative": crowd_rep.cumulative_pedestrians,
                         "density_level": crowd_rep.density_level,
+                        "estimated_total": crowd_rep.estimated_total_crowd,
+                        "density_ratio": crowd_rep.crowd_density_ratio,
                         "cluster_count": crowd_rep.cluster_count,
                         "crosswalk_occupied": crowd_rep.crosswalk_occupied,
                         "safety_alert": crowd_rep.safety_alert,
@@ -428,6 +434,9 @@ class PipelineManager:
         if decision.system_status == STATUS_EMERGENCY_PREEMPTION:
             badge_bg = (20, 20, 200)
             badge_text = "EMERGENCY PREEMPTION: ARTERIAL CORRIDOR CLEAR"
+        elif crowd_rep.density_level == "SURGE_RISK":
+            badge_bg = (30, 30, 220)
+            badge_text = f"CRITICAL CROWD SURGE (EST. {crowd_rep.estimated_total_crowd}+ PERSONS) - PEDESTRIAN CLEARANCE ACTIVE"
         elif decision.system_status == STATUS_PEDESTRIAN_CROSSING:
             badge_bg = (180, 100, 10)
             badge_text = f"PEDESTRIAN WALK PHASE ACTIVE ({crowd_rep.density_level})"
@@ -444,9 +453,14 @@ class PipelineManager:
         cv2.putText(image, badge_text, (18, 32 + bh + 8), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (240, 245, 255), 1)
 
         # 4. Bottom Engineering Telemetry Bar
+        ped_count_str = (
+            f"PEDESTRIANS: {crowd_rep.headcount} (EST. TOTAL: {crowd_rep.estimated_total_crowd}+) | "
+            if crowd_rep.estimated_total_crowd > crowd_rep.headcount
+            else f"PEDESTRIANS: {crowd_rep.headcount} | "
+        )
         summary_text = (
             f"VEHICLES IN ZONE: {traffic_rep.visible_now} (TOTAL: {traffic_rep.total_unique}) | "
-            f"PEDESTRIANS: {crowd_rep.headcount} | "
+            f"{ped_count_str}"
             f"SIGNAL PHASE: {decision.signal_phase} ({decision.recommended_duration_sec}s)"
         )
         cv2.rectangle(image, (0, h - 26), (w, h), (10, 14, 20), -1)

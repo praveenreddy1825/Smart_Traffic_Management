@@ -1278,11 +1278,11 @@
         <div class="kpi-matrix">
           <div class="kpi-cell">
             <span class="kpi-value" id="val-ped-active">0</span>
-            <span class="kpi-label">Active in Crosswalk</span>
+            <span class="kpi-label">Active in Zone</span>
           </div>
           <div class="kpi-cell">
             <span class="kpi-value" id="val-ped-total">0</span>
-            <span class="kpi-label">Cumulative Pedestrians</span>
+            <span class="kpi-label" id="lbl-ped-secondary">Estimated Gathering</span>
           </div>
         </div>
 
@@ -1781,17 +1781,39 @@
       document.getElementById('cnt-motos').textContent = cls.motorcycle || 0;
       document.getElementById('bar-motos').style.width = Math.min(100, Math.round(((cls.motorcycle || 0) / totalInView) * 100)) + '%';
 
-      // Pedestrian Telemetry
+      // Pedestrian Telemetry (Hybrid Local + Volume Estimation)
       const crowd = data.crowd || {};
-      document.getElementById('val-ped-active').textContent = crowd.headcount || 0;
-      document.getElementById('val-ped-total').textContent = crowd.cumulative || 0;
+      const headcount = crowd.headcount || 0;
+      const estimated = crowd.estimated_total || headcount;
+      document.getElementById('val-ped-active').textContent = headcount;
+
+      const valTotal = document.getElementById('val-ped-total');
+      const lblSecondary = document.getElementById('lbl-ped-secondary');
+      if (estimated > headcount) {
+        valTotal.textContent = `~${estimated}+`;
+        valTotal.style.color = '#ef4444';
+        if (lblSecondary) lblSecondary.textContent = 'Estimated Gathering';
+      } else {
+        valTotal.textContent = crowd.cumulative || 0;
+        valTotal.style.color = '#f8fafc';
+        if (lblSecondary) lblSecondary.textContent = 'Cumulative Pedestrians';
+      }
 
       const crosswalkOcc = crowd.crosswalk_occupied;
       const crosswalkBadge = document.getElementById('badge-crosswalk-status');
-      crosswalkBadge.textContent = crosswalkOcc ? 'CROSSWALK: OCCUPIED' : 'CROSSWALK: CLEAR';
-      crosswalkBadge.className = 'module-badge ' + (crosswalkOcc ? 'badge-warn' : 'badge-clear');
-
       const density = crowd.density_level || 'SPARSE';
+
+      if (density === 'SURGE_RISK') {
+        crosswalkBadge.textContent = 'CRITICAL: CROWD SURGE';
+        crosswalkBadge.className = 'module-badge badge-alert';
+      } else if (crosswalkOcc) {
+        crosswalkBadge.textContent = 'CROSSWALK: OCCUPIED';
+        crosswalkBadge.className = 'module-badge badge-warn';
+      } else {
+        crosswalkBadge.textContent = 'CROSSWALK: CLEAR';
+        crosswalkBadge.className = 'module-badge badge-clear';
+      }
+
       document.getElementById('lbl-density-name').textContent = density;
 
       document.getElementById('seg-sparse').className = 'segment-cell ' + (density === 'SPARSE' ? 'active-sparse' : '');
@@ -1799,8 +1821,13 @@
       document.getElementById('seg-crowded').className = 'segment-cell ' + (density === 'CROWDED' ? 'active-crowded' : '');
       document.getElementById('seg-surge').className = 'segment-cell ' + (density === 'SURGE_RISK' ? 'active-surge' : '');
 
-      document.getElementById('lbl-ped-hold').textContent = crosswalkOcc ? 'ENGAGED (HOLDING RED)' : 'DISENGAGED';
-      document.getElementById('lbl-ped-hold').style.color = crosswalkOcc ? '#f59e0b' : '#34d399';
+      if (density === 'SURGE_RISK') {
+        document.getElementById('lbl-ped-hold').textContent = 'ENGAGED (HOLDING RED - SURGE CLEARANCE)';
+        document.getElementById('lbl-ped-hold').style.color = '#ef4444';
+      } else {
+        document.getElementById('lbl-ped-hold').textContent = crosswalkOcc ? 'ENGAGED (HOLDING RED)' : 'DISENGAGED';
+        document.getElementById('lbl-ped-hold').style.color = crosswalkOcc ? '#f59e0b' : '#34d399';
+      }
       document.getElementById('lbl-ped-clusters').textContent = crowd.cluster_count || 0;
 
       // Audio Siren Telemetry

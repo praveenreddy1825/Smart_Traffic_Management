@@ -117,13 +117,14 @@ class VehicleDetector:
         )[0]
         return self._to_detections(result)
 
-    def track(self, image, image_size=None):
+    def track(self, image, image_size=None, crowd_mode=False):
         """Detect AND track: like detect(), but each Detection also gets a track_id.
 
         Uses ByteTrack (built into Ultralytics). It remembers objects between
         calls, so frames must be passed in order from ONE video. Call
         reset_tracking() before starting a different video.
         """
+        import cv2
         img_sz = image_size or self.image_size
         result = self.model.track(
             image,
@@ -153,6 +154,49 @@ class VehicleDetector:
             else:
                 if d.track_id is not None:
                     filtered.append(d)
+
+        # Multi-scale crowd enhancement: run high-res midground tile for background crowds
+        if crowd_mode and len(image.shape) >= 2:
+            h, w = image.shape[:2]
+            # Zoom into the dense middle-ground gathering band (y: 25% to 85%)
+            y1, y2 = int(h * 0.20), int(h * 0.85)
+            band = image[y1:y2, :]
+            try:
+                band_res = self.model.predict(
+                    band,
+                    imgsz=800,
+                    conf=max(0.06, self.person_confidence_threshold - 0.04),
+                    classes=[0],  # person only
+                    device=self.device,
+                    verbose=False,
+                )[0]
+                for b in band_res.boxes:
+                    bx1, by1, bx2, by2 = (float(v) for v in b.xyxy[0].tolist())
+                    conf_val = float(b.conf.item())
+                    # Shift y coordinates back to full image
+                    filtered.append(Detection(
+                        bbox=(bx1, by1 + y1, bx2, by2 + y1),
+                        class_id=0,
+                        class_name="person",
+                        confidence=conf_val,
+                        track_id=None,
+                    ))
+            except Exception as err:
+                logger.debug("Crowd tile prediction exception: %s", err)
+
+            # Deduplicate overlapping boxes between full frame and midground band using NMS
+            if len(filtered) > 1:
+                boxes_for_nms = []
+                confs_for_nms = []
+                for d in filtered:
+                    x1, y1, x2, y2 = d.bbox
+                    boxes_for_nms.append([int(x1), int(y1), int(max(1, x2 - x1)), int(max(1, y2 - y1))])
+                    confs_for_nms.append(float(d.confidence))
+
+                indices = cv2.dnn.NMSBoxes(boxes_for_nms, confs_for_nms, 0.06, 0.45)
+                if len(indices) > 0:
+                    kept_idx = set(indices.flatten() if hasattr(indices, 'flatten') else [i[0] for i in indices])
+                    filtered = [filtered[i] for i in range(len(filtered)) if i in kept_idx]
 
         return filtered
 
