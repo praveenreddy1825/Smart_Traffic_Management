@@ -11,6 +11,7 @@ Serves:
 
 from contextlib import asynccontextmanager
 import asyncio
+import logging
 import os
 import sys
 import threading
@@ -475,12 +476,38 @@ config = load_config()
 setup_logging(config)
 pipeline = PipelineManager(config)
 
+# Suppress high-frequency status polling noise in console
+class _StatusEndpointFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "/api/status" not in record.getMessage()
+
+logging.getLogger("uvicorn.access").addFilter(_StatusEndpointFilter())
+
+# Patch Uvicorn Server.handle_exit for instantaneous, clean Ctrl+C shutdown
+try:
+    import uvicorn.server
+    _orig_handle_exit = uvicorn.server.Server.handle_exit
+
+    def _instant_handle_exit(self, sig: int, frame) -> None:
+        try:
+            pipeline.stop()
+        except Exception:
+            pass
+        self.force_exit = True
+        return _orig_handle_exit(self, sig, frame)
+
+    uvicorn.server.Server.handle_exit = _instant_handle_exit
+except Exception as _patch_err:
+    logger.debug("Uvicorn shutdown patch notice: %s", _patch_err)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     pipeline.start()
-    yield
-    pipeline.stop()
+    try:
+        yield
+    finally:
+        pipeline.stop()
 
 
 app = FastAPI(

@@ -6,7 +6,10 @@
   <title>TMC Central Signal Controller — Municipal Traffic Operations Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </noscript>
   <style>
     :root {
       --bg-base: #0b0f17;
@@ -1132,7 +1135,7 @@
         </div>
 
         <div class="video-viewport">
-          <img src="/video_feed" alt="Real-time Annotated CCTV Stream">
+          <img id="cctv-stream-img" src="" alt="Real-time Annotated CCTV Stream">
         </div>
 
         <!-- CCTV Lower Toolbar -->
@@ -1527,8 +1530,9 @@
 
     // Safe debounced reconnect if browser connection ever drops
     let lastReconnectTime = 0;
-    const videoStreamImg = document.querySelector('.video-viewport img');
+    const videoStreamImg = document.getElementById('cctv-stream-img') || document.querySelector('.video-viewport img');
     if (videoStreamImg) {
+      videoStreamImg.src = '/video_feed';
       videoStreamImg.onerror = function() {
         const now = Date.now();
         if (now - lastReconnectTime > 3000) {
@@ -1863,7 +1867,7 @@
     }
 
     loadScenarios();
-    setInterval(pollStatus, 250);
+    setInterval(pollStatus, 350);
     pollStatus();
   </script>
 </body>

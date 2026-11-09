@@ -123,7 +123,7 @@ class CrowdAnalyzer:
 
         # Compute smart crowd volume projection for mass gatherings
         estimated_total = headcount
-        is_mass_gathering = (headcount >= 15) or (headcount >= 8 and crowd_span_ratio > 0.25 and cluster_count >= 1)
+        is_mass_gathering = (headcount >= 25) or (headcount >= 16 and cluster_count >= 2 and crowd_span_ratio > 0.20)
 
         if is_mass_gathering:
             # Multiplier accounts for occluded background rows in deep perspective

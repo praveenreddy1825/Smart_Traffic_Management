@@ -155,42 +155,49 @@ class VehicleDetector:
                 if d.track_id is not None:
                     filtered.append(d)
 
-        # Multi-scale crowd enhancement: run high-res midground tile for background crowds
+        # Multi-scale crowd enhancement: run high-res overlapping tiles for background crowds
         if crowd_mode and len(image.shape) >= 2:
             h, w = image.shape[:2]
-            # Zoom into the dense middle-ground gathering band (y: 25% to 85%)
-            y1, y2 = int(h * 0.20), int(h * 0.85)
-            band = image[y1:y2, :]
-            try:
-                band_res = self.model.predict(
-                    band,
-                    imgsz=800,
-                    conf=max(0.06, self.person_confidence_threshold - 0.04),
-                    classes=[0],  # person only
-                    device=self.device,
-                    verbose=False,
-                )[0]
-                for b in band_res.boxes:
-                    bx1, by1, bx2, by2 = (float(v) for v in b.xyxy[0].tolist())
-                    conf_val = float(b.conf.item())
-                    # Shift y coordinates back to full image
-                    filtered.append(Detection(
-                        bbox=(bx1, by1 + y1, bx2, by2 + y1),
-                        class_id=0,
-                        class_name="person",
-                        confidence=conf_val,
-                        track_id=None,
-                    ))
-            except Exception as err:
-                logger.debug("Crowd tile prediction exception: %s", err)
+            # Zoom into the dense middle-ground gathering band (y: 18% to 90%)
+            y1, y2 = int(h * 0.18), int(h * 0.90)
+            tile_w = int(w * 0.58)
+            x_overlap = int(w * 0.42)
+            tiles = [
+                (image[y1:y2, 0:tile_w], 0),
+                (image[y1:y2, x_overlap:w], x_overlap),
+            ]
+            tile_conf = max(0.06, self.person_confidence_threshold - 0.04)
 
-            # Deduplicate overlapping boxes between full frame and midground band using NMS
+            for tile_img, offset_x in tiles:
+                try:
+                    tile_res = self.model.predict(
+                        tile_img,
+                        imgsz=800,
+                        conf=tile_conf,
+                        classes=[0],  # person only
+                        device=self.device,
+                        verbose=False,
+                    )[0]
+                    for b in tile_res.boxes:
+                        bx1, by1, bx2, by2 = (float(v) for v in b.xyxy[0].tolist())
+                        conf_val = float(b.conf.item())
+                        filtered.append(Detection(
+                            bbox=(bx1 + offset_x, by1 + y1, bx2 + offset_x, by2 + y1),
+                            class_id=0,
+                            class_name="person",
+                            confidence=conf_val,
+                            track_id=None,
+                        ))
+                except Exception as err:
+                    logger.debug("Crowd tile prediction exception: %s", err)
+
+            # Deduplicate overlapping boxes between full frame and high-res tiles using NMS
             if len(filtered) > 1:
                 boxes_for_nms = []
                 confs_for_nms = []
                 for d in filtered:
-                    x1, y1, x2, y2 = d.bbox
-                    boxes_for_nms.append([int(x1), int(y1), int(max(1, x2 - x1)), int(max(1, y2 - y1))])
+                    x1, y1_b, x2, y2_b = d.bbox
+                    boxes_for_nms.append([int(x1), int(y1_b), int(max(1, x2 - x1)), int(max(1, y2_b - y1_b))])
                     confs_for_nms.append(float(d.confidence))
 
                 indices = cv2.dnn.NMSBoxes(boxes_for_nms, confs_for_nms, 0.06, 0.45)

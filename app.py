@@ -31,12 +31,12 @@ from app.dashboard.server import app, pipeline
 
 
 def sigint_handler(sig, frame):
-    print("\n[INFO] Interrupt signal received, stopping pipeline and exiting cleanly...")
+    print("\n[INFO] Shutdown signal received, exiting cleanly...")
     try:
         pipeline.stop()
     except Exception:
         pass
-    sys.exit(0)
+    os._exit(0)
 
 
 def main(host: str = "127.0.0.1", port: int = 8000):
@@ -56,7 +56,7 @@ def main(host: str = "127.0.0.1", port: int = 8000):
         host=host,
         port=port,
         log_level="info",
-        timeout_graceful_shutdown=1,
+        timeout_graceful_shutdown=0.1,
         timeout_keep_alive=3,
     )
     server = uvicorn.Server(config)
