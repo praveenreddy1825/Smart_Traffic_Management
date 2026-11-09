@@ -432,15 +432,19 @@ class PipelineManager:
         cv2.putText(image, audio_text, (w - 200, 17), cv2.FONT_HERSHEY_SIMPLEX, 0.42, audio_color, 1)
 
         # 3. Operations Status Badge (Upper Left)
+        is_crowd_scene = (effective_mode == "crowd") or (crowd_rep.density_level == "SURGE_RISK")
         if decision.system_status == STATUS_EMERGENCY_PREEMPTION:
             badge_bg = (20, 20, 200)
             badge_text = "EMERGENCY PREEMPTION: ARTERIAL CORRIDOR CLEAR"
         elif crowd_rep.density_level == "SURGE_RISK":
             badge_bg = (30, 30, 220)
-            badge_text = f"CRITICAL CROWD SURGE (EST. {crowd_rep.estimated_total_crowd}+ PERSONS) - PEDESTRIAN CLEARANCE ACTIVE"
+            badge_text = f"CRITICAL CROWD SURGE (EST. ~{crowd_rep.estimated_total_crowd} PERSONS) - CROWD CLEARANCE ACTIVE"
+        elif is_crowd_scene:
+            badge_bg = (180, 100, 10)
+            badge_text = f"CROWD MONITORING ACTIVE: {crowd_rep.density_level} (EST. ~{crowd_rep.estimated_total_crowd} PERSONS)"
         elif decision.system_status == STATUS_PEDESTRIAN_CROSSING:
             badge_bg = (180, 100, 10)
-            badge_text = f"PEDESTRIAN WALK PHASE ACTIVE ({crowd_rep.density_level})"
+            badge_text = f"PEDESTRIAN CROSSWALK PHASE ACTIVE ({crowd_rep.density_level})"
         elif decision.system_status == STATUS_CONGESTION_PRIORITY:
             badge_bg = (20, 120, 200)
             badge_text = "ADAPTIVE EXTENSION: HIGH VEHICULAR QUEUE"
@@ -454,14 +458,18 @@ class PipelineManager:
         cv2.putText(image, badge_text, (18, 32 + bh + 8), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (240, 245, 255), 1)
 
         # 4. Bottom Engineering Telemetry Bar
-        ped_count_str = (
-            f"PEDESTRIANS: {crowd_rep.headcount} (EST. TOTAL: {crowd_rep.estimated_total_crowd}+) | "
-            if crowd_rep.estimated_total_crowd > crowd_rep.headcount
-            else f"PEDESTRIANS: {crowd_rep.headcount} | "
-        )
+        if is_crowd_scene:
+            crowd_str = (
+                f"CROWD DETECTED: {crowd_rep.headcount} (EST. GATHERING: ~{crowd_rep.estimated_total_crowd}) | "
+                if crowd_rep.estimated_total_crowd > crowd_rep.headcount
+                else f"CROWD DETECTED: {crowd_rep.headcount} | "
+            )
+        else:
+            crowd_str = f"PEDESTRIANS: {crowd_rep.headcount} | "
+
         summary_text = (
             f"VEHICLES IN ZONE: {traffic_rep.visible_now} (TOTAL: {traffic_rep.total_unique}) | "
-            f"{ped_count_str}"
+            f"{crowd_str}"
             f"SIGNAL PHASE: {decision.signal_phase} ({decision.recommended_duration_sec}s)"
         )
         cv2.rectangle(image, (0, h - 26), (w, h), (10, 14, 20), -1)

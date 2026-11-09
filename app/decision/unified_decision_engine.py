@@ -91,22 +91,37 @@ class UnifiedDecisionEngine:
         density = crowd_report.density_level if crowd_report else CROWD_SPARSE
 
         if active_mode in ("crowd", "auto") and (density in (CROWD_CROWDED, CROWD_SURGE) or (active_mode == "crowd" and headcount >= 3)):
+            is_crowd = (active_mode == "crowd") or (density == CROWD_SURGE)
+            est_total = crowd_report.estimated_total_crowd if crowd_report else headcount
             reasons = [
-                f"Pedestrian headcount in view: {headcount} ({density} density)",
-                f"Crosswalk occupied: {crowd_report.crosswalk_occupied if crowd_report else False}",
+                f"Crowd headcount in view: {headcount} ({density} density, ~{est_total} est. gathering)" if is_crowd else f"Pedestrian headcount in view: {headcount} ({density} density)",
+                f"Crowd monitored zone occupied: {crowd_report.crosswalk_occupied if crowd_report else False}" if is_crowd else f"Crosswalk occupied: {crowd_report.crosswalk_occupied if crowd_report else False}",
             ]
             if crowd_report and crowd_report.cluster_count > 0:
-                reasons.append(f"Detected {crowd_report.cluster_count} dense pedestrian gathering cluster(s)")
+                reasons.append(f"Detected {crowd_report.cluster_count} dense gathering cluster(s)")
 
-            walk_duration = 20 if density == CROWD_SURGE else (15 if density == CROWD_CROWDED else 12)
+            walk_duration = 25 if density == CROWD_SURGE else (15 if density == CROWD_CROWDED else 12)
+            if density == CROWD_SURGE:
+                headline = f"🚨 CRITICAL CROWD SURGE CLEARANCE ({density})"
+                action = f"HOLD VEHICULAR RED (CROWD CLEARANCE {walk_duration}s)"
+                rec = f"Hold vehicle traffic on red for {walk_duration}s to guarantee public safety for ~{est_total} gathering persons."
+            elif is_crowd:
+                headline = f"👥 CROWD SAFETY CLEARANCE ACTIVE ({density})"
+                action = f"HOLD VEHICULAR RED (CROWD CLEARANCE {walk_duration}s)"
+                rec = f"Hold vehicle traffic on red for {walk_duration}s to manage safe crowd flow for {headcount} detected persons."
+            else:
+                headline = f"👥 PEDESTRIAN WALK PHASE ACTIVE ({density})"
+                action = "HOLD VEHICLE RED / ACTIVATE WALK SIGNAL"
+                rec = f"Hold vehicle traffic on red for {walk_duration}s to guarantee safe crossing for {headcount} pedestrians."
+
             return UnifiedDecision(
                 timestamp_sec=timestamp,
                 system_status=STATUS_PEDESTRIAN_CROSSING,
                 signal_phase=PHASE_PEDESTRIAN_WALK,
                 recommended_duration_sec=walk_duration,
-                headline=f"👥 PEDESTRIAN WALK PHASE ACTIVE ({density})",
-                action="HOLD VEHICLE RED / ACTIVATE WALK SIGNAL",
-                recommendation=f"Hold vehicle traffic on red for {walk_duration}s to guarantee safe crossing for {headcount} pedestrians.",
+                headline=headline,
+                action=action,
+                recommendation=rec,
                 reasons=reasons,
                 siren_confidence=siren_conf,
             )

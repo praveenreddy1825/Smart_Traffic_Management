@@ -126,13 +126,17 @@ class CrowdAnalyzer:
         is_mass_gathering = (headcount >= 25) or (headcount >= 16 and cluster_count >= 2 and crowd_span_ratio > 0.20)
 
         if is_mass_gathering:
-            # Multiplier accounts for occluded background rows in deep perspective
-            expansion = 2.0 + min(4.0, crowd_span_ratio * 5.0) + (cluster_count * 0.4)
+            # Physical perspective expansion:
+            # Detected heads (50-75) capture the visible foreground and midground rows.
+            # Background occlusion accounts for an additional 1.5x to 2.8x realistic expansion.
+            depth_factor = min(0.9, crowd_span_ratio * 1.5)
+            cluster_bonus = min(0.5, (cluster_count / 15.0) * 0.35)
+            expansion = 1.4 + depth_factor + cluster_bonus
             estimated_total = max(headcount, int(round(headcount * expansion)))
             density_level = CROWD_SURGE
         elif headcount >= self.crowded_threshold:
             density_level = CROWD_SURGE
-            estimated_total = int(headcount * 1.5)
+            estimated_total = int(round(headcount * 1.3))
         elif headcount >= self.moderate_threshold:
             density_level = CROWD_CROWDED
             estimated_total = headcount
@@ -143,22 +147,22 @@ class CrowdAnalyzer:
             density_level = CROWD_SPARSE
             estimated_total = headcount
 
-        # Crosswalk occupancy & safety recommendations
+        # Safety alerts & recommendations for crowd management and pedestrian safety
         crosswalk_occupied = headcount > 0
         safety_alert = None
         recommendation = None
 
         if density_level == CROWD_SURGE:
-            safety_alert = f"CRITICAL CROWD SURGE: Dense gathering ({estimated_total} Est. Persons) in corridor!"
-            recommendation = "EMERGENCY CROWD PREEMPTION: Hold vehicular red, extend walk interval to maximum clearance (25s)."
+            safety_alert = f"CRITICAL CROWD SURGE: Dense gathering (~{estimated_total} Est. Persons) detected!"
+            recommendation = "EMERGENCY CROWD PREEMPTION: Hold vehicular red, activate crowd surge clearance (25s)."
         elif density_level == CROWD_CROWDED:
-            safety_alert = f"WARNING: Heavy pedestrian congestion at crossing zone ({headcount} active)."
-            recommendation = "EXTEND PEDESTRIAN WALK PHASE: +15s walk interval recommended."
+            safety_alert = f"ELEVATED CROWD DENSITY: High accumulation in monitored zone ({headcount} detected)."
+            recommendation = "EXTEND CLEARANCE PHASE: +15s clearance interval recommended."
         elif density_level == CROWD_MODERATE:
-            safety_alert = f"ACTIVE CROSSING: {headcount} pedestrians navigating crosswalk."
-            recommendation = "TRIGGER PEDESTRIAN WALK PHASE: Standard 12s crossing interval."
+            safety_alert = f"ACTIVE FOOT TRAFFIC: {headcount} persons detected in zone."
+            recommendation = "TRIGGER WALK / CROSSING PHASE: Standard 12s crossing interval."
         else:
-            recommendation = "Crosswalk clear or low foot-traffic. Standard vehicle cycle maintained."
+            recommendation = "Zone clear or low density. Standard vehicle cycle maintained."
 
         report = CrowdReport(
             timestamp_sec=timestamp_sec,

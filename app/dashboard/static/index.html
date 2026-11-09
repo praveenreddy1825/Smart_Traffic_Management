@@ -1144,7 +1144,7 @@
             <span class="tool-label">Focus:</span>
             <button class="btn-tool active" id="btn-mode-auto" onclick="setAnalysisMode('auto')">Auto</button>
             <button class="btn-tool" id="btn-mode-veh" onclick="setAnalysisMode('vehicle')">Vehicles</button>
-            <button class="btn-tool" id="btn-mode-crowd" onclick="setAnalysisMode('crowd')">Pedestrians</button>
+            <button class="btn-tool" id="btn-mode-crowd" onclick="setAnalysisMode('crowd')">Crowd</button>
             <button class="btn-tool" id="btn-mode-hybrid" onclick="setAnalysisMode('hybrid')">Hybrid</button>
           </div>
 
@@ -1263,7 +1263,7 @@
         </table>
       </div>
 
-      <!-- Module 2: Pedestrian Crosswalk Safety -->
+      <!-- Module 2: Crowd Estimation & Safety (Dynamic) -->
       <div class="module-card">
         <div class="module-header">
           <span class="module-title">
@@ -1273,19 +1273,19 @@
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            Pedestrian & Crosswalk Safety
+            <span id="lbl-module-crowd-title">Crowd Estimation & Public Safety</span>
           </span>
-          <span class="module-badge badge-clear" id="badge-crosswalk-status">CROSSWALK: CLEAR</span>
+          <span class="module-badge badge-clear" id="badge-crosswalk-status">CROWD: STABLE</span>
         </div>
 
         <div class="kpi-matrix">
           <div class="kpi-cell">
             <span class="kpi-value" id="val-ped-active">0</span>
-            <span class="kpi-label">Active in Zone</span>
+            <span class="kpi-label" id="lbl-ped-primary">Detected in Crowd</span>
           </div>
           <div class="kpi-cell">
             <span class="kpi-value" id="val-ped-total">0</span>
-            <span class="kpi-label" id="lbl-ped-secondary">Estimated Gathering</span>
+            <span class="kpi-label" id="lbl-ped-secondary">Estimated Crowd Size</span>
           </div>
         </div>
 
@@ -1303,7 +1303,7 @@
         </div>
 
         <div style="font-size:0.72rem; color:var(--text-muted); display:flex; justify-content:space-between; border-top:1px solid #162032; padding-top:0.35rem;">
-          <span>Pedestrian Hold Interlock: <strong id="lbl-ped-hold" style="color:#f1f5f9;">DISENGAGED</strong></span>
+          <span><span id="lbl-interlock-title">Crowd Safety Interlock</span>: <strong id="lbl-ped-hold" style="color:#f1f5f9;">DISENGAGED</strong></span>
           <span>Crowd Clusters: <strong id="lbl-ped-clusters" style="color:#38bdf8;">0</strong></span>
         </div>
       </div>
@@ -1743,9 +1743,10 @@
         tag.className = 'phase-status-tag tag-emergency';
         tag.textContent = 'EMERGENCY CLEARANCE';
         timingFill.className = 'timing-meter-fill emergency';
-      } else if (status === 'PEDESTRIAN_CROSSING') {
+      } else if (status === 'PEDESTRIAN_CROSSING' || status === 'CROWD_CLEARANCE') {
+        const isCrowdEvt = (activeFolder === 'crowd') || ((data.crowd || {}).density_level === 'SURGE_RISK') || (((data.crowd || {}).headcount || 0) >= 15);
         tag.className = 'phase-status-tag tag-pedestrian';
-        tag.textContent = 'PEDESTRIAN WALK';
+        tag.textContent = isCrowdEvt ? 'CROWD CLEARANCE' : 'PEDESTRIAN WALK';
         timingFill.className = 'timing-meter-fill pedestrian';
       } else if (status === 'CONGESTION_PRIORITY') {
         tag.className = 'phase-status-tag tag-amber';
@@ -1785,31 +1786,58 @@
       document.getElementById('cnt-motos').textContent = cls.motorcycle || 0;
       document.getElementById('bar-motos').style.width = Math.min(100, Math.round(((cls.motorcycle || 0) / totalInView) * 100)) + '%';
 
-      // Pedestrian Telemetry (Hybrid Local + Volume Estimation)
+      // Crowd & Pedestrian Telemetry (Adaptive terminology based on scene)
       const crowd = data.crowd || {};
       const headcount = crowd.headcount || 0;
       const estimated = crowd.estimated_total || headcount;
+      const density = crowd.density_level || 'SPARSE';
+      const isCrowdScene = (activeFolder === 'crowd') || (density === 'SURGE_RISK') || (headcount >= 15);
+
+      const titleEl = document.getElementById('lbl-module-crowd-title');
+      const primaryLbl = document.getElementById('lbl-ped-primary');
+      const secondaryLbl = document.getElementById('lbl-ped-secondary');
+      const interlockLbl = document.getElementById('lbl-interlock-title');
+
+      if (isCrowdScene) {
+        if (titleEl) titleEl.textContent = 'Crowd Estimation & Public Safety';
+        if (primaryLbl) primaryLbl.textContent = 'Detected in Crowd';
+        if (secondaryLbl) secondaryLbl.textContent = 'Estimated Crowd Size';
+        if (interlockLbl) interlockLbl.textContent = 'Crowd Safety Interlock';
+      } else {
+        if (titleEl) titleEl.textContent = 'Pedestrian & Crosswalk Safety';
+        if (primaryLbl) primaryLbl.textContent = 'Active in Zone';
+        if (secondaryLbl) secondaryLbl.textContent = 'Cumulative Pedestrians';
+        if (interlockLbl) interlockLbl.textContent = 'Pedestrian Hold Interlock';
+      }
+
       document.getElementById('val-ped-active').textContent = headcount;
 
       const valTotal = document.getElementById('val-ped-total');
-      const lblSecondary = document.getElementById('lbl-ped-secondary');
-      if (estimated > headcount) {
-        valTotal.textContent = `~${estimated}+`;
+      if (estimated > headcount && isCrowdScene) {
+        valTotal.textContent = `~${estimated}`;
         valTotal.style.color = '#ef4444';
-        if (lblSecondary) lblSecondary.textContent = 'Estimated Gathering';
       } else {
-        valTotal.textContent = crowd.cumulative || 0;
+        valTotal.textContent = crowd.cumulative || headcount;
         valTotal.style.color = '#f8fafc';
-        if (lblSecondary) lblSecondary.textContent = 'Cumulative Pedestrians';
       }
 
       const crosswalkOcc = crowd.crosswalk_occupied;
       const crosswalkBadge = document.getElementById('badge-crosswalk-status');
-      const density = crowd.density_level || 'SPARSE';
 
       if (density === 'SURGE_RISK') {
         crosswalkBadge.textContent = 'CRITICAL: CROWD SURGE';
         crosswalkBadge.className = 'module-badge badge-alert';
+      } else if (isCrowdScene) {
+        if (density === 'CROWDED') {
+          crosswalkBadge.textContent = 'CROWD: DENSE';
+          crosswalkBadge.className = 'module-badge badge-warn';
+        } else if (density === 'MODERATE') {
+          crosswalkBadge.textContent = 'CROWD: MODERATE';
+          crosswalkBadge.className = 'module-badge badge-clear';
+        } else {
+          crosswalkBadge.textContent = 'CROWD: SPARSE';
+          crosswalkBadge.className = 'module-badge badge-clear';
+        }
       } else if (crosswalkOcc) {
         crosswalkBadge.textContent = 'CROSSWALK: OCCUPIED';
         crosswalkBadge.className = 'module-badge badge-warn';
@@ -1828,6 +1856,10 @@
       if (density === 'SURGE_RISK') {
         document.getElementById('lbl-ped-hold').textContent = 'ENGAGED (HOLDING RED - SURGE CLEARANCE)';
         document.getElementById('lbl-ped-hold').style.color = '#ef4444';
+      } else if (isCrowdScene) {
+        const engaged = density === 'CROWDED' || headcount >= 15;
+        document.getElementById('lbl-ped-hold').textContent = engaged ? 'ENGAGED (CROWD CLEARANCE)' : 'MONITORING';
+        document.getElementById('lbl-ped-hold').style.color = engaged ? '#f59e0b' : '#34d399';
       } else {
         document.getElementById('lbl-ped-hold').textContent = crosswalkOcc ? 'ENGAGED (HOLDING RED)' : 'DISENGAGED';
         document.getElementById('lbl-ped-hold').style.color = crosswalkOcc ? '#f59e0b' : '#34d399';
