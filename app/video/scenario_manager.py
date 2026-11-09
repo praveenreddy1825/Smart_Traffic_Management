@@ -26,6 +26,10 @@ FRIENDLY_NAMES = {
     "02_urban_traffic_flow.mp4": "Urban Traffic Flow (Multi-Class)",
     "01_pedestrian_crossing.mp4": "Active Pedestrian Crosswalk",
     "02_busy_crosswalk_audio.mp4": "Busy Crosswalk with Street Audio",
+    "15443786_1920_1080_60fps.mp4": "Metropolitan Pedestrian Promenade",
+    "16982165_956_720_30fps.mp4": "Dense Urban Sidewalk Gathering",
+    "19980218-hd_720_1280_30fps.mp4": "Crosswalk Foot Traffic & Transit",
+    "7353399-hd_1920_1080_24fps.mp4": "Plaza Crowd Density & Surge",
     "01_ambulance_corridor.mp4": "Emergency Ambulance Corridor",
     "13268870_960_540_30fps.mp4": "High-Volume Arterial Road",
     "12937229_960_540_30fps.mp4": "North City Intersection",
@@ -107,7 +111,7 @@ class ScenarioManager:
 
         return scenarios
 
-    def load_scenario(self, scenario_id_or_path: str, max_frame_size: int = 720) -> ScenarioStream:
+    def load_scenario(self, scenario_id_or_path: str, max_frame_size: int = 1080) -> ScenarioStream:
         """Switch active scenario to the requested clip."""
         all_scenarios = self.scan_scenarios()
         chosen = None

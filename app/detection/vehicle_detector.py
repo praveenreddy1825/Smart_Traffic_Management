@@ -41,23 +41,27 @@ class VehicleDetector:
         self,
         weights_path,
         class_names,
-        confidence_threshold=0.35,
+        confidence_threshold=0.20,
+        person_confidence_threshold=0.12,
         iou_threshold=0.5,
-        image_size=640,
+        image_size=800,
         device="auto",
         tracker_config="bytetrack.yaml",
-        tracking_confidence=0.1,
+        tracking_confidence=0.10,
+        keep_untracked_persons=True,
     ):
         # Imported here so the rest of the project can be used without loading torch
         from ultralytics import YOLO
 
         self.weights_path = Path(weights_path)
         self.confidence_threshold = confidence_threshold
+        self.person_confidence_threshold = person_confidence_threshold
         self.iou_threshold = iou_threshold
         self.image_size = image_size
         self.device = get_device(device)
         self.tracker_config = str(tracker_config)
         self.tracking_confidence = tracking_confidence
+        self.keep_untracked_persons = keep_untracked_persons
 
         # If the file is missing, Ultralytics downloads the official weights to this path
         logger.info("Loading YOLO model %s on %s", self.weights_path.name, self.device)
@@ -71,8 +75,8 @@ class VehicleDetector:
                              f"Valid examples: car, motorcycle, bus, truck, person")
         self.class_names = list(class_names)
         self.class_ids = [name_to_id[name] for name in class_names]
-        logger.info("Detecting classes %s (COCO ids %s), confidence >= %.2f",
-                    self.class_names, self.class_ids, self.confidence_threshold)
+        logger.info("Detecting classes %s (COCO ids %s), vehicle conf >= %.2f, person conf >= %.2f",
+                    self.class_names, self.class_ids, self.confidence_threshold, self.person_confidence_threshold)
 
     @classmethod
     def from_config(cls, config):
@@ -82,14 +86,16 @@ class VehicleDetector:
             class_names.append("person")
         tracking = config.get("tracking", {})
         return cls(
-            weights_path=Path(config["paths"]["models_dir"]) / settings["model_name"],
+            weights_path=Path(config["paths"]["models_dir"]) / settings.get("model_name", "yolo11n.pt"),
             class_names=class_names,
-            confidence_threshold=settings.get("confidence_threshold", 0.35),
+            confidence_threshold=settings.get("confidence_threshold", 0.20),
+            person_confidence_threshold=settings.get("person_confidence_threshold", 0.12),
             iou_threshold=settings.get("iou_threshold", 0.5),
-            image_size=settings.get("image_size", 640),
+            image_size=settings.get("image_size", 800),
             device=config.get("device", "auto"),
             tracker_config=resolve_path(tracking.get("tracker_config", "config/bytetrack.yaml")),
-            tracking_confidence=tracking.get("detection_confidence", 0.1),
+            tracking_confidence=tracking.get("detection_confidence", 0.10),
+            keep_untracked_persons=tracking.get("keep_untracked_persons", True),
         )
 
     def detect(self, image):
@@ -111,32 +117,44 @@ class VehicleDetector:
         )[0]
         return self._to_detections(result)
 
-    def track(self, image):
+    def track(self, image, image_size=None):
         """Detect AND track: like detect(), but each Detection also gets a track_id.
 
-        Uses ByteTrack (built into Ultralytics). It remembers vehicles between
+        Uses ByteTrack (built into Ultralytics). It remembers objects between
         calls, so frames must be passed in order from ONE video. Call
         reset_tracking() before starting a different video.
-
-        Per frame, ByteTrack:
-          1. predicts where every known vehicle should be now (Kalman filter),
-          2. matches confident new boxes to those predictions by box overlap (IoU),
-          3. tries to match remaining weak boxes to still-unmatched tracks,
-          4. starts new IDs for unmatched confident boxes; drops tracks lost too long.
         """
+        img_sz = image_size or self.image_size
         result = self.model.track(
             image,
             persist=True,                     # keep tracker state between frames
             tracker=self.tracker_config,
             conf=self.tracking_confidence,    # low on purpose - see config "tracking"
             iou=self.iou_threshold,
-            imgsz=self.image_size,
+            imgsz=img_sz,
             classes=self.class_ids,
             device=self.device,
             verbose=False,
         )[0]
-        # Only boxes that belong to a track get an ID; untracked weak boxes are dropped
-        return [d for d in self._to_detections(result) if d.track_id is not None]
+        
+        all_detections = self._to_detections(result)
+        filtered = []
+        for d in all_detections:
+            # Class-sensitive confidence threshold
+            min_conf = self.person_confidence_threshold if d.class_name == "person" else self.confidence_threshold
+            if d.confidence < min_conf:
+                continue
+
+            # In crowds, preserve all detected pedestrians even if ByteTrack is acquiring track;
+            # For vehicles, require track_id for line crossing stability.
+            if d.class_name == "person":
+                if self.keep_untracked_persons or d.track_id is not None:
+                    filtered.append(d)
+            else:
+                if d.track_id is not None:
+                    filtered.append(d)
+
+        return filtered
 
     def reset_tracking(self):
         """Forget all tracks (IDs restart) - use when switching to another video."""

@@ -162,6 +162,7 @@ class PipelineManager:
         """Switch active scenario clip and reset counters."""
         with self.lock:
             self.scenario_manager.load_scenario(scenario_id)
+            self.detector.reset_tracking()
             self.counter.reset()
             self.traffic_analyzer.reset()
             self.crowd_analyzer.reset()

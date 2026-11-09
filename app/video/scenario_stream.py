@@ -91,7 +91,7 @@ class ScenarioStream:
     def __init__(
         self,
         video_path: Path,
-        max_frame_size: int = 720,
+        max_frame_size: int = 1080,
         sample_rate: int = 16000,
         window_seconds: float = 2.0,
         hop_seconds: float = 1.0,
