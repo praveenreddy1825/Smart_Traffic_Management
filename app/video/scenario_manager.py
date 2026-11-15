@@ -80,7 +80,10 @@ class ScenarioManager:
             if not folder.is_dir():
                 continue
             video_files = []
-            for ext in ("*.mp4", "*.mov", "*.avi", "*.mkv", "*.MP4", "*.MOV"):
+            for ext in (
+                "*.mp4", "*.mov", "*.avi", "*.mkv", "*.MP4", "*.MOV",
+                "*.jpg", "*.jpeg", "*.png", "*.webp", "*.JPG", "*.PNG",
+            ):
                 video_files.extend(folder.glob(ext))
             for video_file in sorted(video_files, key=lambda f: f.name.lower()):
                 if video_file.name in seen_files:

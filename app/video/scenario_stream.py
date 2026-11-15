@@ -104,6 +104,8 @@ class ScenarioStream:
         self.hop_samples = int(hop_seconds * sample_rate)
         self.loop = loop
 
+        self.is_image: bool = self.video_path.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp", ".bmp")
+        self.static_image: Optional[np.ndarray] = None
         self.cap: Optional[cv2.VideoCapture] = None
         self.fps: float = 30.0
         self.total_frames: int = 0
@@ -118,35 +120,47 @@ class ScenarioStream:
         self.is_opened: bool = False
 
     def open(self):
-        """Open video capture and extract audio."""
+        """Open video capture or load static image, and extract audio."""
         if not self.video_path.is_file():
-            raise VideoSourceError(f"Video file not found: {self.video_path}")
+            raise VideoSourceError(f"Media file not found: {self.video_path}")
 
-        self.cap = cv2.VideoCapture(str(self.video_path))
-        if not self.cap.isOpened():
-            raise VideoSourceError(f"Could not open video file: {self.video_path}")
+        if self.is_image:
+            raw_img = cv2.imread(str(self.video_path))
+            if raw_img is None:
+                raise VideoSourceError(f"Could not decode image file: {self.video_path}")
+            self.static_image = raw_img
+            self.fps = 10.0
+            self.total_frames = 1
+            self.frame_index = 0
+            self.cap = None
+        else:
+            self.cap = cv2.VideoCapture(str(self.video_path))
+            if not self.cap.isOpened():
+                raise VideoSourceError(f"Could not open video file: {self.video_path}")
 
-        raw_fps = self.cap.get(cv2.CAP_PROP_FPS)
-        self.fps = float(raw_fps) if (raw_fps and 0 < raw_fps <= 120) else 30.0
-        self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
-        self.frame_index = 0
+            raw_fps = self.cap.get(cv2.CAP_PROP_FPS)
+            self.fps = float(raw_fps) if (raw_fps and 0 < raw_fps <= 120) else 30.0
+            self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
+            self.frame_index = 0
 
-        # Extract audio
+        # Extract audio (embedded or companion .wav/.mp3)
         self.audio_samples = _extract_audio_from_file(self.video_path, self.sample_rate)
         self.audio_ptr = 0
         self.window_index = 0
         self.last_audio_sec = -1.0
         self.is_opened = True
 
-        logger.info("Opened ScenarioStream: %s (%.1f FPS, %d frames, audio=%s)",
-                    self.video_path.name, self.fps, self.total_frames, self.has_audio)
+        media_type = "Image" if self.is_image else "Video"
+        logger.info("Opened ScenarioStream: %s %s (%.1f FPS, %d frames, audio=%s)",
+                    media_type, self.video_path.name, self.fps, self.total_frames, self.has_audio)
         return self
 
     def close(self):
-        """Release underlying video capture."""
+        """Release underlying video capture or clear static image."""
         if self.cap:
             self.cap.release()
             self.cap = None
+        self.static_image = None
         self.is_opened = False
 
     @property
@@ -154,32 +168,42 @@ class ScenarioStream:
         return self.audio_samples is not None and len(self.audio_samples) > 0
 
     def read(self, stride: int = 1) -> Tuple[Optional[VideoFrame], Optional[AudioWindow]]:
-        """Read the next video frame and return any newly ready audio window."""
-        if not self.is_opened or not self.cap:
+        """Read the next video/image frame and return any newly ready audio window."""
+        if not self.is_opened:
             return None, None
 
-        # Fast-forward intermediate frames if stride > 1
-        if stride > 1:
-            for _ in range(stride - 1):
-                if not self.cap.grab():
-                    if self.loop:
-                        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        self.frame_index = 0
-                    break
-                self.frame_index += 1
-
-        success, img = self.cap.read()
-        if not success:
-            if self.loop:
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                self.frame_index = 0
-                self.audio_ptr = 0
-                success, img = self.cap.read()
-            if not success:
+        if self.is_image:
+            if self.static_image is None:
+                return None, None
+            img = self.static_image.copy()
+            self.frame_index += 1
+            current_time_sec = self.frame_index / self.fps
+        else:
+            if not self.cap:
                 return None, None
 
-        self.frame_index += 1
-        current_time_sec = self.frame_index / self.fps
+            # Fast-forward intermediate frames if stride > 1
+            if stride > 1:
+                for _ in range(stride - 1):
+                    if not self.cap.grab():
+                        if self.loop:
+                            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                            self.frame_index = 0
+                        break
+                    self.frame_index += 1
+
+            success, img = self.cap.read()
+            if not success:
+                if self.loop:
+                    self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    self.frame_index = 0
+                    self.audio_ptr = 0
+                    success, img = self.cap.read()
+                if not success:
+                    return None, None
+
+            self.frame_index += 1
+            current_time_sec = self.frame_index / self.fps
 
         # Resize video frame for responsive web streaming & inference
         h, w = img.shape[:2]

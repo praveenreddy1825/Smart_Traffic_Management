@@ -11,6 +11,7 @@ Serves:
 
 from contextlib import asynccontextmanager
 import asyncio
+import base64
 import logging
 import os
 import sys
@@ -607,13 +608,206 @@ def select_scenario(req: ScenarioSelectRequest):
 
 @app.post("/api/scenarios/upload")
 async def upload_scenario(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith((".mp4", ".avi", ".mov", ".mkv")):
-        raise HTTPException(status_code=400, detail="Only video files (.mp4, .avi, .mov, .mkv) are allowed.")
+    allowed_exts = (".mp4", ".avi", ".mov", ".mkv", ".jpg", ".jpeg", ".png", ".webp")
+    if not file.filename.lower().endswith(allowed_exts):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Allowed formats: Video ({'.mp4, .avi, .mov, .mkv'}) or Image ({'.jpg, .jpeg, .png, .webp'}).",
+        )
 
     content = await file.read()
     meta = pipeline.scenario_manager.save_uploaded_clip(file.filename, content)
     pipeline.select_scenario(meta.id)
     return {"status": "ok", "scenario": {"id": meta.id, "name": meta.name, "category": meta.category}}
+
+
+@app.get("/api/incident/json")
+def get_incident_json():
+    with pipeline.lock:
+        status = dict(pipeline.latest_status)
+        scenario = pipeline.scenario_manager.active_scenario
+
+    now_utc = time.strftime("%Y-%m-%d %H:%M:%S UTC")
+    incident_id = f"POL-INT402-{int(time.time())}"
+    return JSONResponse(content={
+        "incident_id": incident_id,
+        "timestamp_utc": now_utc,
+        "jurisdiction": "Metro Police Department — Traffic Operations Center INT-402",
+        "scenario": scenario.name if scenario else "Live Feed",
+        "category": scenario.category if scenario else "general",
+        "telemetry": status,
+    })
+
+
+@app.get("/api/incident/export", response_class=HTMLResponse)
+def export_police_incident_report():
+    with pipeline.lock:
+        status = dict(pipeline.latest_status)
+        frame_bytes = pipeline.latest_frame
+        scenario = pipeline.scenario_manager.active_scenario
+
+    now_utc = time.strftime("%Y-%m-%d %H:%M:%S UTC")
+    incident_id = f"POL-TMC-402-{int(time.time())}"
+    s_name = scenario.name if scenario else "Surveillance Feed Node 402"
+    s_cat = (scenario.category if scenario else "GENERAL").upper()
+
+    veh = status.get("vehicles", {})
+    crowd = status.get("crowd", {})
+    audio = status.get("audio", {})
+    decision = status.get("decision", {})
+    events = status.get("events", [])
+
+    img_b64 = base64.b64encode(frame_bytes).decode("utf-8") if frame_bytes else ""
+
+    # Classify Incident Code for Police Operations
+    sys_status = decision.get("system_status", "NORMAL")
+    density = crowd.get("density_level", "SPARSE")
+    if "EMERGENCY" in sys_status:
+        code = "CODE-3: EMERGENCY ARTERIAL CORRIDOR PREEMPTION"
+        code_color = "#ef4444"
+        badge_class = "code-emergency"
+    elif density == "SURGE_RISK":
+        code = "CODE-2: PUBLIC SAFETY CROWD SURGE INTERLOCK"
+        code_color = "#f97316"
+        badge_class = "code-crowd"
+    elif veh.get("level") == "HIGH":
+        code = "CODE-1: ARTERIAL CONGESTION MANAGEMENT"
+        code_color = "#f59e0b"
+        badge_class = "code-traffic"
+    else:
+        code = "CODE-0: ROUTINE TRAFFIC MONITORING"
+        code_color = "#10b981"
+        badge_class = "code-normal"
+
+    events_html = "".join(
+        f"<tr><td><code>[{e.get('timestamp')}]</code></td><td><strong>{e.get('source')}</strong></td><td>{e.get('message')}</td></tr>"
+        for e in events[-8:]
+    ) or "<tr><td colspan='3'>No state transitions recorded</td></tr>"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Police Incident Report - {incident_id}</title>
+  <style>
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0; padding: 2rem; background: #0b0f17; color: #f8fafc;
+    }}
+    .container {{ max-width: 960px; margin: 0 auto; background: #111726; border: 1px solid #1e293b; border-radius: 8px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+    .header {{ display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1e293b; padding-bottom: 1.5rem; margin-bottom: 1.5rem; }}
+    .brand h1 {{ margin: 0; font-size: 1.4rem; color: #38bdf8; letter-spacing: 0.5px; text-transform: uppercase; }}
+    .brand p {{ margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #94a3b8; }}
+    .meta-box {{ text-align: right; font-family: monospace; font-size: 0.85rem; color: #cbd5e1; }}
+    .badge {{ display: inline-block; padding: 0.35rem 0.75rem; border-radius: 4px; font-weight: 700; font-size: 0.85rem; margin-top: 0.5rem; }}
+    .code-emergency {{ background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }}
+    .code-crowd {{ background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid #f97316; }}
+    .code-traffic {{ background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }}
+    .code-normal {{ background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }}
+    .grid-3 {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }}
+    .card {{ background: #162032; border: 1px solid #1e293b; border-radius: 6px; padding: 1rem; }}
+    .card h3 {{ margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; }}
+    .card .val {{ font-size: 1.8rem; font-weight: 700; font-family: monospace; color: #f1f5f9; }}
+    .card .sub {{ font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }}
+    .evidence {{ margin-bottom: 1.5rem; }}
+    .evidence h3 {{ margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #cbd5e1; text-transform: uppercase; }}
+    .evidence img {{ width: 100%; max-height: 480px; object-fit: contain; background: #000; border: 1px solid #334155; border-radius: 6px; }}
+    .advisory-box {{ background: rgba(14, 165, 233, 0.1); border-left: 4px solid #0284c7; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; }}
+    .advisory-box h4 {{ margin: 0 0 0.25rem 0; color: #38bdf8; font-size: 0.95rem; }}
+    .advisory-box p {{ margin: 0; font-size: 0.88rem; color: #e2e8f0; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }}
+    th, td {{ padding: 0.5rem; border-bottom: 1px solid #1e293b; }}
+    th {{ color: #94a3b8; text-transform: uppercase; font-size: 0.7rem; }}
+    .actions {{ display: flex; justify-content: space-between; margin-top: 1.5rem; border-top: 1px solid #1e293b; padding-top: 1rem; }}
+    .btn {{ background: #2563eb; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.85rem; }}
+    .btn:hover {{ background: #1d4ed8; }}
+    .btn-secondary {{ background: #334155; }}
+    .btn-secondary:hover {{ background: #475569; }}
+    @media print {{
+      body {{ background: #fff; color: #000; padding: 0; }}
+      .container {{ border: none; box-shadow: none; max-width: 100%; padding: 0; background: #fff; color: #000; }}
+      .actions {{ display: none; }}
+      .card {{ background: #f8fafc; border: 1px solid #e2e8f0; color: #000; }}
+      .card .val {{ color: #000; }}
+      .brand h1 {{ color: #000; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <h1>Metropolitan Police Department</h1>
+        <p>Traffic Operations Center (TMC) — Autonomous Multimodal Edge Intelligence Incident Log</p>
+        <span class="badge {badge_class}">{code}</span>
+      </div>
+      <div class="meta-box">
+        <div><strong>Incident ID:</strong> {incident_id}</div>
+        <div><strong>Timestamp:</strong> {now_utc}</div>
+        <div><strong>Node:</strong> Intersection INT-402 (Broadway & 5th Ave)</div>
+        <div><strong>CCTV Feed:</strong> {s_name} ({s_cat})</div>
+      </div>
+    </div>
+
+    <div class="evidence">
+      <h3>Visual Surveillance & Evidence Still (Annotated)</h3>
+      {f'<img src="data:image/jpeg;base64,{img_b64}" alt="CCTV Incident Evidence">' if img_b64 else '<p style="color:#64748b;">No frame available</p>'}
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>Vehicle Traffic Flow</h3>
+        <div class="val">{veh.get('visible_now', 0)}</div>
+        <div class="sub">Level: <strong>{veh.get('level', 'LOW')}</strong> | Total Passed: {veh.get('total_unique', 0)}</div>
+        <div class="sub">Cars: {veh.get('by_class', {}).get('car', 0)} | Buses: {veh.get('by_class', {}).get('bus', 0)} | Trucks: {veh.get('by_class', {}).get('truck', 0)}</div>
+      </div>
+
+      <div class="card">
+        <h3>Crowd Estimation</h3>
+        <div class="val">{crowd.get('headcount', 0)} <span style="font-size:1rem; color:#f87171;">(~{crowd.get('estimated_total', 0)} Est.)</span></div>
+        <div class="sub">Density: <strong>{crowd.get('density_level', 'SPARSE')}</strong></div>
+        <div class="sub">Clusters: {crowd.get('cluster_count', 0)} | Interlock: <strong>{'ENGAGED' if crowd.get('density_level') == 'SURGE_RISK' else 'MONITORING'}</strong></div>
+      </div>
+
+      <div class="card">
+        <h3>Acoustic Intelligence</h3>
+        <div class="val">{round(audio.get('confidence', 0.0) * 100, 1)}%</div>
+        <div class="sub">State: <strong>{audio.get('state', 'NO_SIREN')}</strong></div>
+        <div class="sub">Siren Type: {audio.get('siren_type') or 'None detected'} | Level: {audio.get('loudness_dbfs', -60.0)} dBFS</div>
+      </div>
+    </div>
+
+    <div class="advisory-box">
+      <h4>🚨 Police Dispatch Action & Signal Timing Protocol</h4>
+      <p><strong>Signal Controller Decision:</strong> {decision.get('headline', 'Standard Cycle Active')}</p>
+      <p style="margin-top:0.4rem;"><strong>Recommended Operational Action:</strong> {decision.get('action', 'Hold vehicle traffic on red for clearance.')}</p>
+      <p style="margin-top:0.4rem;"><strong>Field Advisory:</strong> {decision.get('recommendation', 'Maintain standard surveillance cycle.')}</p>
+    </div>
+
+    <div>
+      <h3 style="font-size:0.85rem; color:#94a3b8; text-transform:uppercase;">Recent Operations Audit Trail</h3>
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Source</th><th>Event Message</th></tr>
+        </thead>
+        <tbody>
+          {events_html}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <a href="/" class="btn btn-secondary">← Back to Live CCTV Dashboard</a>
+      <div>
+        <a href="/api/incident/json" target="_blank" class="btn btn-secondary" style="margin-right:0.5rem;">Download JSON</a>
+        <button onclick="window.print()" class="btn">Print / Save Police Dossier (PDF)</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return HTMLResponse(content=html)
 
 
 @app.post("/api/control/mode")
