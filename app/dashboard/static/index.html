@@ -963,7 +963,6 @@
           METRO TRAFFIC OPERATIONS CENTER
           <span class="badge-its">ITS-ATC v2.4</span>
         </h1>
-        <p>Intersection Node INT-402 · Broadway & 5th Ave · Multimodal Controller</p>
       </div>
     </div>
 
@@ -1683,9 +1682,8 @@
         tag.textContent = 'EMERGENCY CLEARANCE';
         timingFill.className = 'timing-meter-fill emergency';
       } else if (status === 'PEDESTRIAN_CROSSING' || status === 'CROWD_CLEARANCE') {
-        const isCrowdEvt = (activeFolder === 'crowd') || ((data.crowd || {}).density_level === 'SURGE_RISK') || (((data.crowd || {}).headcount || 0) >= 15);
         tag.className = 'phase-status-tag tag-pedestrian';
-        tag.textContent = isCrowdEvt ? 'CROWD CLEARANCE' : 'PEDESTRIAN WALK';
+        tag.textContent = 'CROWD CLEARANCE';
         timingFill.className = 'timing-meter-fill pedestrian';
       } else if (status === 'CONGESTION_PRIORITY') {
         tag.className = 'phase-status-tag tag-amber';
@@ -1725,36 +1723,28 @@
       document.getElementById('cnt-motos').textContent = cls.motorcycle || 0;
       document.getElementById('bar-motos').style.width = Math.min(100, Math.round(((cls.motorcycle || 0) / totalInView) * 100)) + '%';
 
-      // Crowd & Pedestrian Telemetry (Adaptive terminology based on scene)
+      // Crowd Estimation Telemetry (Consistent Crowd Focus)
       const crowd = data.crowd || {};
       const headcount = crowd.headcount || 0;
       const estimated = crowd.estimated_total || headcount;
       const density = crowd.density_level || 'SPARSE';
-      const isCrowdScene = (activeFolder === 'crowd') || (density === 'SURGE_RISK') || (headcount >= 15);
 
       const titleEl = document.getElementById('lbl-module-crowd-title');
       const primaryLbl = document.getElementById('lbl-ped-primary');
       const secondaryLbl = document.getElementById('lbl-ped-secondary');
       const interlockLbl = document.getElementById('lbl-interlock-title');
 
-      if (isCrowdScene) {
-        if (titleEl) titleEl.textContent = 'Crowd Estimation & Public Safety';
-        if (primaryLbl) primaryLbl.textContent = 'Detected in Crowd';
-        if (secondaryLbl) secondaryLbl.textContent = 'Estimated Crowd Size';
-        if (interlockLbl) interlockLbl.textContent = 'Crowd Safety Interlock';
-      } else {
-        if (titleEl) titleEl.textContent = 'Pedestrian & Crosswalk Safety';
-        if (primaryLbl) primaryLbl.textContent = 'Active in Zone';
-        if (secondaryLbl) secondaryLbl.textContent = 'Cumulative Pedestrians';
-        if (interlockLbl) interlockLbl.textContent = 'Pedestrian Hold Interlock';
-      }
+      if (titleEl) titleEl.textContent = 'Crowd Estimation & Public Safety';
+      if (primaryLbl) primaryLbl.textContent = 'Detected in Crowd';
+      if (secondaryLbl) secondaryLbl.textContent = 'Estimated Crowd Size';
+      if (interlockLbl) interlockLbl.textContent = 'Crowd Safety Interlock';
 
       document.getElementById('val-ped-active').textContent = headcount;
 
       const valTotal = document.getElementById('val-ped-total');
-      if (estimated > headcount && isCrowdScene) {
+      if (estimated > headcount) {
         valTotal.textContent = `~${estimated}`;
-        valTotal.style.color = '#ef4444';
+        valTotal.style.color = (density === 'SURGE_RISK' || density === 'CROWDED') ? '#ef4444' : '#38bdf8';
       } else {
         valTotal.textContent = crowd.cumulative || headcount;
         valTotal.style.color = '#f8fafc';
@@ -1763,26 +1753,23 @@
       const crosswalkOcc = crowd.crosswalk_occupied;
       const crosswalkBadge = document.getElementById('badge-crosswalk-status');
 
-      if (density === 'SURGE_RISK') {
-        crosswalkBadge.textContent = 'CRITICAL: CROWD SURGE';
-        crosswalkBadge.className = 'module-badge badge-alert';
-      } else if (isCrowdScene) {
-        if (density === 'CROWDED') {
+      if (crosswalkBadge) {
+        if (density === 'SURGE_RISK') {
+          crosswalkBadge.textContent = 'CRITICAL: CROWD SURGE';
+          crosswalkBadge.className = 'module-badge badge-alert';
+        } else if (density === 'CROWDED') {
           crosswalkBadge.textContent = 'CROWD: DENSE';
           crosswalkBadge.className = 'module-badge badge-warn';
         } else if (density === 'MODERATE') {
           crosswalkBadge.textContent = 'CROWD: MODERATE';
-          crosswalkBadge.className = 'module-badge badge-clear';
+          crosswalkBadge.className = 'module-badge badge-info';
+        } else if (headcount > 0 || crosswalkOcc) {
+          crosswalkBadge.textContent = 'CROWD: ACTIVE';
+          crosswalkBadge.className = 'module-badge badge-info';
         } else {
-          crosswalkBadge.textContent = 'CROWD: SPARSE';
+          crosswalkBadge.textContent = 'CROWD: STABLE';
           crosswalkBadge.className = 'module-badge badge-clear';
         }
-      } else if (crosswalkOcc) {
-        crosswalkBadge.textContent = 'CROSSWALK: OCCUPIED';
-        crosswalkBadge.className = 'module-badge badge-warn';
-      } else {
-        crosswalkBadge.textContent = 'CROSSWALK: CLEAR';
-        crosswalkBadge.className = 'module-badge badge-clear';
       }
 
       document.getElementById('lbl-density-name').textContent = density;

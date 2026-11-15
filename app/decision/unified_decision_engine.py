@@ -110,9 +110,9 @@ class UnifiedDecisionEngine:
                 action = f"HOLD VEHICULAR RED (CROWD CLEARANCE {walk_duration}s)"
                 rec = f"Hold vehicle traffic on red for {walk_duration}s to manage safe crowd flow for {headcount} detected persons."
             else:
-                headline = f"👥 PEDESTRIAN WALK PHASE ACTIVE ({density})"
-                action = "HOLD VEHICLE RED / ACTIVATE WALK SIGNAL"
-                rec = f"Hold vehicle traffic on red for {walk_duration}s to guarantee safe crossing for {headcount} pedestrians."
+                headline = f"👥 CROWD ESTIMATION & CLEARANCE ACTIVE ({density})"
+                action = f"HOLD VEHICULAR RED (CROWD CLEARANCE {walk_duration}s)"
+                rec = f"Hold vehicle traffic on red for {walk_duration}s to guarantee safe crossing for {headcount} crowd persons."
 
             return UnifiedDecision(
                 timestamp_sec=timestamp,
