@@ -1518,7 +1518,12 @@
 
     // Modal Explorer
     function openFolderModal() {
-      populateModalGrids();
+      if (!allScenarios || allScenarios.length === 0) {
+        loadScenarios();
+      } else {
+        populateModalGrids();
+      }
+      filterModalTab(currentModalTab || 'all');
       document.getElementById('folder-modal').classList.add('open');
     }
 
@@ -1593,25 +1598,6 @@
           activeFolder = 'uploads';
           await loadScenarios();
           closeFolderModal();
-        }
-      } catch (err) {
-        console.error('File upload failed:', err);
-      }
-    }
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const res = await fetch('/api/scenarios/upload', {
-          method: 'POST',
-          body: formData
-        });
-        if (res.ok) {
-          const data = await res.json();
-          currentScenarioId = data.scenario.id;
-          activeFolder = 'uploads';
-          await loadScenarios();
         }
       } catch (err) {
         console.error('File upload failed:', err);
