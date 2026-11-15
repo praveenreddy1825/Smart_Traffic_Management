@@ -1381,7 +1381,6 @@
         if (!res.ok) return;
         allScenarios = await res.json();
         updateFolderCounts();
-        renderActiveFolderClips();
         populateModalGrids();
       } catch (err) {
         console.error('Failed to load scenarios:', err);
@@ -1443,35 +1442,6 @@
 
     function switchFolder(folderName) {
       activeFolder = folderName;
-      renderActiveFolderClips();
-    }
-
-    // Render clip pills directly in the bar for the active folder (if container exists)
-    function renderActiveFolderClips() {
-      const container = document.getElementById('active-folder-clips');
-      if (!container) return;
-      container.innerHTML = '';
-
-      const targetCats = (activeFolder === 'uploads' || activeFolder === 'upload') ? ['uploads', 'upload'] : [activeFolder];
-      const clips = allScenarios.filter(s => targetCats.includes(s.category));
-
-      if (clips.length === 0) {
-        container.innerHTML = `<span style="font-size:0.72rem; color:#64748b; font-family:var(--font-mono); padding:0.25rem 0.5rem;">[No clips found in data/videos/${activeFolder}/]</span>`;
-        return;
-      }
-
-      clips.forEach(s => {
-        const btn = document.createElement('button');
-        btn.className = 'clip-chip ' + (s.id === currentScenarioId ? 'active' : '');
-        btn.onclick = () => selectScenario(s.id);
-        btn.title = `${s.name} (${s.file_name})`;
-        btn.innerHTML = `
-          <span class="clip-chip-filename">${s.file_name}</span>
-          <span style="color:#f1f5f9; font-weight:600;">${s.name}</span>
-          ${s.has_audio ? '<span class="clip-chip-audio">16kHz Audio</span>' : ''}
-        `;
-        container.appendChild(btn);
-      });
     }
 
     async function selectScenario(scenarioId) {
@@ -1487,7 +1457,6 @@
           if (found) {
             const folderName = (found.category === 'upload') ? 'uploads' : found.category;
             activeFolder = folderName;
-            renderActiveFolderClips();
             document.getElementById('osd-feed-title').textContent = `CAM · ${found.name.toUpperCase()} (${found.file_name})`;
             document.getElementById('osd-audio-tag').textContent = found.has_audio ? '16 kHz AUDIO DEMUXED' : 'AUDIO: MUTE';
             document.getElementById('osd-audio-tag').style.color = found.has_audio ? '#10b981' : '#64748b';
@@ -1633,22 +1602,6 @@
       } catch (err) {}
     }
 
-    async function injectEmergency() {
-      try {
-        await fetch('/api/control/inject', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ vehicle_type: 'Ambulance', has_emergency: true })
-        });
-      } catch (err) {}
-    }
-
-    async function clearEmergency() {
-      try {
-        await fetch('/api/control/clear-inject', { method: 'POST' });
-      } catch (err) {}
-    }
-
     // Live Telemetry Poller (4Hz, non-overlapping)
     let isPolling = false;
     async function pollStatus() {
@@ -1680,10 +1633,8 @@
       if (data.scenario.id && data.scenario.id !== currentScenarioId) {
         currentScenarioId = data.scenario.id;
         const scenCategory = (data.scenario.category === 'upload') ? 'uploads' : data.scenario.category;
-        if (scenCategory && scenCategory !== activeFolder) {
+        if (scenCategory) {
           switchFolder(scenCategory);
-        } else {
-          renderActiveFolderClips();
         }
         document.getElementById('osd-feed-title').textContent = `CAM · ${data.scenario.name.toUpperCase()} (${data.scenario.file_name || ''})`;
         document.getElementById('osd-audio-tag').textContent = data.scenario.has_audio ? '16 kHz AUDIO DEMUXED' : 'AUDIO: MUTE';

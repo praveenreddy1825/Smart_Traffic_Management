@@ -407,8 +407,13 @@ class PipelineManager:
         """Render high-clarity bounding boxes, track IDs, and CCTV OSD on the image."""
         h, w = image.shape[:2]
 
-        # 1. Draw Bounding Boxes with Class Colors
-        for d in detections:
+        # 1. Partition Detections into Vehicles and Pedestrians/Crowd
+        vehicle_detections = [d for d in detections if d.class_name != "person"]
+        person_detections = [d for d in detections if d.class_name == "person"]
+        is_crowd_scene = (effective_mode == "crowd") or (crowd_rep.density_level in ("SURGE_RISK", "CROWDED")) or (len(person_detections) >= 8)
+
+        # 1a. Always render Vehicle Bounding Boxes with class colors and tracking IDs
+        for d in vehicle_detections:
             x1, y1, x2, y2 = (int(v) for v in d.bbox)
             color = CLASS_COLORS.get(d.class_name, (200, 200, 200))
             cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
@@ -419,6 +424,74 @@ class PipelineManager:
             cv2.rectangle(image, (x1, max(y1 - 18, 0)), (x1 + lw + 6, max(y1, 18)), (15, 18, 24), -1)
             cv2.rectangle(image, (x1, max(y1 - 18, 0)), (x1 + lw + 6, max(y1, 18)), color, 1)
             cv2.putText(image, label, (x1 + 3, max(y1 - 4, 13)), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1)
+
+        # 1b. Crowd Presentation: Thermal Density Heatmap + Tactical Dots vs. Individual Boxes
+        if is_crowd_scene and person_detections:
+            # Generate high-performance Gaussian Thermal Density Heatmap
+            scale = 4
+            dh, dw = max(1, h // scale), max(1, w // scale)
+            density_grid = np.zeros((dh, dw), dtype=np.float32)
+
+            head_coords = []
+            for d in person_detections:
+                x1, y1, x2, y2 = d.bbox
+                # Localize human head position (~top 20% center of detection box)
+                hx = int(round((x1 + x2) / 2.0))
+                hy = int(round(y1 + (y2 - y1) * 0.20))
+                head_coords.append((hx, hy))
+                gx = int(hx / scale)
+                gy = int(hy / scale)
+                if 0 <= gx < dw and 0 <= gy < dh:
+                    density_grid[gy, gx] += 1.0
+
+            # Compute smooth continuous thermal distribution
+            k_size = int(max(15, min(dh, dw) // 10)) | 1
+            density_blurred = cv2.GaussianBlur(density_grid, (k_size, k_size), sigmaX=k_size / 3.2)
+
+            max_val = float(np.max(density_blurred))
+            if max_val > 0.05:
+                norm = np.clip(density_blurred / (max_val * 0.72 + 1e-6), 0.0, 1.0)
+                norm_u8 = (norm * 255).astype(np.uint8)
+                heatmap_rgb = cv2.applyColorMap(norm_u8, cv2.COLORMAP_JET)
+                heatmap_full = cv2.resize(heatmap_rgb, (w, h), interpolation=cv2.INTER_LINEAR)
+                density_mask = cv2.resize(norm_u8, (w, h), interpolation=cv2.INTER_LINEAR)
+
+                # Translucent thermal blend only on crowd density zone (surroundings untouched)
+                active_mask = density_mask > 22
+                if np.any(active_mask):
+                    alpha = 0.38
+                    blended = cv2.addWeighted(heatmap_full, alpha, image, 1.0 - alpha, 0)
+                    image[active_mask] = blended[active_mask]
+
+            # Render tactical glowing head dots (clean point tracking without box clutter)
+            for hx, hy in head_coords:
+                if 0 <= hx < w and 0 <= hy < h:
+                    cv2.circle(image, (hx, hy), 3, (0, 230, 255), -1, cv2.LINE_AA)
+                    cv2.circle(image, (hx, hy), 6, (0, 140, 255), 1, cv2.LINE_AA)
+
+            # Floating Tactical Hotspot Tag above primary crowd centroid
+            if len(head_coords) >= 12:
+                xs = [pt[0] for pt in head_coords]
+                ys = [pt[1] for pt in head_coords]
+                cx, cy = int(np.mean(xs)), int(min(ys))
+                hotspot_tag = f"CROWD DENSITY HOTSPOT [{crowd_rep.density_level} · ~{crowd_rep.estimated_total_crowd} PAX]"
+                (tw, th), _ = cv2.getTextSize(hotspot_tag, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+                tag_x = max(10, min(cx - tw // 2, w - tw - 14))
+                tag_y = max(35, cy - 14)
+                cv2.rectangle(image, (tag_x, tag_y - th - 6), (tag_x + tw + 8, tag_y + 4), (10, 14, 22), -1)
+                cv2.rectangle(image, (tag_x, tag_y - th - 6), (tag_x + tw + 8, tag_y + 4), (0, 165, 255), 1)
+                cv2.putText(image, hotspot_tag, (tag_x + 4, tag_y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 230, 255), 1, cv2.LINE_AA)
+        else:
+            # Sparse Pedestrian Crossing: Draw standard bounding boxes
+            for d in person_detections:
+                x1, y1, x2, y2 = (int(v) for v in d.bbox)
+                cv2.rectangle(image, (x1, y1), (x2, y2), (0, 220, 220), 2)
+                id_str = f" #{d.track_id}" if d.track_id else ""
+                label = f"PEDESTRIAN{id_str} {d.confidence:.2f}"
+                (lw, lh), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.40, 1)
+                cv2.rectangle(image, (x1, max(y1 - 18, 0)), (x1 + lw + 6, max(y1, 18)), (15, 18, 24), -1)
+                cv2.rectangle(image, (x1, max(y1 - 18, 0)), (x1 + lw + 6, max(y1, 18)), (0, 220, 220), 1)
+                cv2.putText(image, label, (x1 + 3, max(y1 - 4, 13)), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 255, 255), 1)
 
         # 2. Authentic CCTV Top OSD Strip
         ts_str = time.strftime("%Y-%m-%d %H:%M:%S UTC")
