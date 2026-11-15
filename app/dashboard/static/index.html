@@ -141,128 +141,51 @@
       background-color: var(--color-green);
     }
 
-    /* 2. CCTV Video Matrix & Folder Toolbar */
-    .vms-toolbar {
-      background: #101625;
-      border-bottom: 1px solid var(--border-color);
-      padding: 0.5rem 1.25rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.85rem;
-      flex-wrap: wrap;
-    }
-
-    .vms-left {
+    /* 2. Top Header Navigation Controls */
+    .header-actions {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      flex: 1;
-      min-width: 320px;
+      gap: 0.6rem;
     }
 
-    /* Folder Tabs (Exact Folder Names: Vehicles, Crowd, Emergency, Uploads) */
-    .vms-filter-tabs {
-      display: flex;
-      gap: 0.25rem;
-      background: #090d16;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 0.2rem;
-    }
-
-    .vms-tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 0.3rem 0.7rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: all 0.15s ease;
-    }
-
-    .vms-tab-btn:hover {
-      color: var(--text-primary);
-      background: #172134;
-    }
-
-    .vms-tab-btn.active {
-      background: #1e293b;
-      color: #fff;
-    }
-
-    .vms-tab-btn.active#tab-vehicles { color: #34d399; }
-    .vms-tab-btn.active#tab-crowd { color: #60a5fa; }
-    .vms-tab-btn.active#tab-emergency { color: #f87171; }
-    .vms-tab-btn.active#tab-uploads { color: #c084fc; }
-
-    .tab-count {
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      background: #283548;
-      color: #94a3b8;
-      padding: 0.05rem 0.35rem;
-      border-radius: 3px;
-    }
-
-    .vms-tab-btn.active .tab-count {
-      background: #334155;
-      color: #fff;
-    }
-
-    /* Inline Clips Container */
-    .vms-clips-container {
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      overflow-x: auto;
-      flex: 1;
-      padding: 0.15rem 0;
-    }
-
-    .clip-chip {
-      background: #131c2e;
-      border: 1px solid #1f2b40;
+    .header-btn {
+      background: #141c2e;
+      border: 1px solid #233148;
       color: #cbd5e1;
-      padding: 0.3rem 0.65rem;
-      border-radius: 5px;
-      font-size: 0.74rem;
-      font-weight: 500;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.42rem 0.85rem;
+      border-radius: 6px;
       cursor: pointer;
-      white-space: nowrap;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 0.45rem;
       transition: all 0.15s ease;
-      font-family: var(--font-sans);
+      text-decoration: none;
     }
 
-    .clip-chip:hover {
-      background: #1b263d;
+    .header-btn:hover {
+      background: #1e2c45;
       color: #fff;
-      border-color: #3b82f6;
+      border-color: #38bdf8;
     }
 
-    .clip-chip.active {
-      background: #162438;
+    .header-btn.primary {
+      background: #1e293b;
       border-color: #38bdf8;
       color: #f0f9ff;
-      box-shadow: 0 0 0 1px #38bdf8;
     }
 
-    .clip-chip-filename {
+    .header-badge {
       font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: #94a3b8;
-    }
-
-    .clip-chip.active .clip-chip-filename {
-      color: #7dd3fc;
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 0.05rem 0.42rem;
+      border-radius: 9999px;
     }
 
     .clip-chip-audio {
@@ -273,52 +196,6 @@
       border: 1px solid rgba(16, 185, 129, 0.3);
       padding: 0.05rem 0.3rem;
       border-radius: 3px;
-    }
-
-    .vms-right {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn-action {
-      background: #162032;
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      font-family: var(--font-sans);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.38rem 0.75rem;
-      border-radius: 5px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: all 0.15s ease;
-    }
-
-    .btn-action:hover {
-      background: #1e2c45;
-      color: var(--text-primary);
-      border-color: #3b82f6;
-    }
-
-    .btn-emergency-override {
-      background: #3b1115;
-      border: 1px solid #7f1d1d;
-      color: #fca5a5;
-    }
-
-    .btn-emergency-override:hover {
-      background: #4c1d24;
-      border-color: #ef4444;
-      color: #fff;
-    }
-
-    .btn-emergency-clear {
-      background: #1a2233;
-      border: 1px solid #334155;
-      color: var(--text-secondary);
     }
 
     /* 3. Main Operational Grid */
@@ -896,13 +773,13 @@
       word-break: break-all;
     }
 
-    /* Modal for Folder Explorer */
+    /* Modal for Surveillance Data & Media Catalog */
     .modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(5px);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -915,28 +792,27 @@
       background: var(--bg-surface);
       border: 1px solid #28374d;
       border-radius: 8px;
-      max-width: 800px;
+      max-width: 860px;
       width: 100%;
-      max-height: 80vh;
+      max-height: 84vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75);
     }
 
     .modal-head {
       background: #0f1624;
       border-bottom: 1px solid var(--border-color);
-      padding: 0.75rem 1.25rem;
+      padding: 0.8rem 1.25rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .modal-head h3 {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       color: #f1f5f9;
       display: flex;
       align-items: center;
@@ -947,61 +823,119 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       cursor: pointer;
       line-height: 1;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
     }
 
-    .modal-close-btn:hover { color: #fff; }
+    .modal-close-btn:hover { color: #fff; background: #1e293b; }
 
     .modal-body {
-      padding: 1rem;
+      padding: 1.1rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 1rem;
     }
 
+    .modal-filter-bar {
+      display: flex;
+      gap: 0.4rem;
+      background: #090e18;
+      border: 1px solid #1a2538;
+      border-radius: 6px;
+      padding: 0.25rem;
+      flex-wrap: wrap;
+    }
+
+    .modal-filter-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .modal-filter-tab:hover {
+      background: #172134;
+      color: var(--text-primary);
+    }
+
+    .modal-filter-tab.active {
+      background: #1e293b;
+      color: #38bdf8;
+    }
+
+    .tab-count {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      background: #283548;
+      color: #94a3b8;
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+    }
+
+    .modal-filter-tab.active .tab-count {
+      background: #334155;
+      color: #fff;
+    }
+
     .modal-folder-group {
       background: #0c121e;
       border: 1px solid #1a2538;
       border-radius: 6px;
-      padding: 0.65rem 0.85rem;
+      padding: 0.75rem 0.95rem;
     }
 
     .modal-folder-label {
       font-family: var(--font-mono);
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 600;
       color: #94a3b8;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
       display: flex;
       justify-content: space-between;
+      border-bottom: 1px solid #162030;
+      padding-bottom: 0.4rem;
     }
 
     .modal-clip-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 0.6rem;
     }
 
     .modal-clip-item {
       background: #141c2c;
       border: 1px solid #233148;
-      border-radius: 5px;
-      padding: 0.6rem 0.75rem;
+      border-radius: 6px;
+      padding: 0.7rem 0.85rem;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
     }
 
     .modal-clip-item:hover {
-      border-color: #3b82f6;
+      border-color: #38bdf8;
       background: #1b263b;
+      transform: translateY(-1px);
     }
 
     .modal-clip-item.active {
-      border-color: #38bdf8;
-      background: #192a45;
+      border-color: #34d399;
+      background: #122426;
+      box-shadow: 0 0 0 1px #34d399;
     }
 
     #file-upload-input { display: none; }
@@ -1033,6 +967,40 @@
       </div>
     </div>
 
+    <!-- Quick Navigation / Data Controls -->
+    <div class="header-actions">
+      <!-- Data & Media Sources Modal Trigger -->
+      <button class="header-btn primary" onclick="openFolderModal()" title="View Surveillance Media & Scenarios">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Data</span>
+        <span class="header-badge" id="header-data-count">0</span>
+      </button>
+
+      <!-- Direct Upload Media -->
+      <button class="header-btn" onclick="document.getElementById('file-upload-input').click()" title="Import Video or Image">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span>Upload</span>
+      </button>
+
+      <!-- Police Incident Dossier Export -->
+      <a class="header-btn" href="/api/incident/export" target="_blank" title="Official Police Incident Report Dossier" style="text-decoration:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>Police Report</span>
+      </a>
+    </div>
+
     <div class="header-diagnostics">
       <div class="diag-pill">
         <span class="status-indicator-dot"></span>
@@ -1051,82 +1019,9 @@
     </div>
   </header>
 
-  <!-- 2. CCTV Video Matrix & Folder Toolbar -->
-  <div class="vms-toolbar">
-    <div class="vms-left">
-      <!-- Folder Explorer Button -->
-      <button class="btn-action" onclick="openFolderModal()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span>Folder</span>
-      </button>
-
-      <!-- Exact Folder Names as on Disk -->
-      <div class="vms-filter-tabs">
-        <button class="vms-tab-btn active" id="tab-vehicles" onclick="switchFolder('vehicles')">
-          <span>Vehicles</span>
-          <span class="tab-count" id="count-veh">0</span>
-        </button>
-        <button class="vms-tab-btn" id="tab-crowd" onclick="switchFolder('crowd')">
-          <span>Crowd</span>
-          <span class="tab-count" id="count-crowd">0</span>
-        </button>
-        <button class="vms-tab-btn" id="tab-emergency" onclick="switchFolder('emergency')">
-          <span>Emergency</span>
-          <span class="tab-count" id="count-emerg">0</span>
-        </button>
-        <button class="vms-tab-btn" id="tab-uploads" onclick="switchFolder('uploads')">
-          <span>Uploads</span>
-          <span class="tab-count" id="count-upload">0</span>
-        </button>
-      </div>
-
-      <!-- Active Folder Clips (Directly clickable pills showing filename + name) -->
-      <div class="vms-clips-container" id="active-folder-clips">
-        <!-- Rendered dynamically for current folder -->
-      </div>
-    </div>
-
-    <div class="vms-right">
-      <button class="btn-action" onclick="document.getElementById('file-upload-input').click()" title="Import Video or Image">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="17 8 12 3 7 8"></polyline>
-          <line x1="12" y1="3" x2="12" y2="15"></line>
-        </svg>
-        <span>Import Media</span>
-      </button>
-
-      <a class="btn-action" href="/api/incident/export" target="_blank" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem;" title="Generate Police Incident Report">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-        <span>Police Incident Report</span>
-      </a>
-
-      <button class="btn-action btn-emergency-override" onclick="injectEmergency()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-        <span>Simulate Siren Signal</span>
-      </button>
-
-      <button class="btn-action btn-emergency-clear" onclick="clearEmergency()">
-        <span>Clear</span>
-      </button>
-    </div>
-  </div>
-
   <input type="file" id="file-upload-input" accept=".mp4,.avi,.mov,.mkv,.jpg,.jpeg,.png,.webp" onchange="handleFileUpload(event)">
 
-  <!-- 3. Primary Workspace Grid -->
+  <!-- 2. Primary Workspace Grid -->
   <main>
 
     <!-- Left Column: CCTV Stream & Hardware Controller -->
@@ -1375,52 +1270,87 @@
 
   </main>
 
-  <!-- Folder Explorer Modal Dialog -->
+  <!-- Surveillance Data & Media Catalog Modal Dialog -->
   <div class="modal-overlay" id="folder-modal" onclick="closeFolderModal()">
     <div class="modal-window" onclick="event.stopPropagation()">
       <div class="modal-head">
-        <h3>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div style="display:flex; align-items:center; gap:0.65rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
           </svg>
-          Folder
-        </h3>
-        <button class="modal-close-btn" onclick="closeFolderModal()">&times;</button>
+          <h3 style="margin:0;">Surveillance Media & Data Scenarios</h3>
+          <span class="header-badge" id="modal-total-badge">0 sources</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <button class="header-btn" onclick="document.getElementById('file-upload-input').click()" style="padding:0.32rem 0.65rem; font-size:0.72rem;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Upload New Media</span>
+          </button>
+          <button class="modal-close-btn" onclick="closeFolderModal()">&times;</button>
+        </div>
       </div>
       <div class="modal-body">
         
-        <!-- Vehicles Folder -->
-        <div class="modal-folder-group">
+        <!-- Filter Tabs inside Modal -->
+        <div class="modal-filter-bar">
+          <button class="modal-filter-tab active" id="modal-tab-all" onclick="filterModalTab('all')">
+            <span>All Sources</span>
+            <span class="tab-count" id="modal-tab-cnt-all">0</span>
+          </button>
+          <button class="modal-filter-tab" id="modal-tab-vehicles" onclick="filterModalTab('vehicles')">
+            <span>Vehicles</span>
+            <span class="tab-count" id="modal-tab-cnt-veh">0</span>
+          </button>
+          <button class="modal-filter-tab" id="modal-tab-crowd" onclick="filterModalTab('crowd')">
+            <span>Crowd</span>
+            <span class="tab-count" id="modal-tab-cnt-crowd">0</span>
+          </button>
+          <button class="modal-filter-tab" id="modal-tab-emergency" onclick="filterModalTab('emergency')">
+            <span>Emergency</span>
+            <span class="tab-count" id="modal-tab-cnt-emerg">0</span>
+          </button>
+          <button class="modal-filter-tab" id="modal-tab-uploads" onclick="filterModalTab('uploads')">
+            <span>Uploads</span>
+            <span class="tab-count" id="modal-tab-cnt-upload">0</span>
+          </button>
+        </div>
+
+        <!-- Vehicles Folder Group -->
+        <div class="modal-folder-group" id="group-vehicles">
           <div class="modal-folder-label">
-            <span>data/videos/vehicles/</span>
-            <span id="modal-cnt-veh">0 clips</span>
+            <span>VEHICULAR TRAFFIC (data/videos/vehicles/)</span>
+            <span id="modal-cnt-veh">0 items</span>
           </div>
           <div class="modal-clip-grid" id="modal-grid-vehicles"></div>
         </div>
 
-        <!-- Crowd Folder -->
-        <div class="modal-folder-group">
+        <!-- Crowd Folder Group -->
+        <div class="modal-folder-group" id="group-crowd">
           <div class="modal-folder-label">
-            <span>data/videos/crowd/</span>
-            <span id="modal-cnt-crowd">0 clips</span>
+            <span>CROWD ESTIMATION & PUBLIC SAFETY (data/videos/crowd/)</span>
+            <span id="modal-cnt-crowd">0 items</span>
           </div>
           <div class="modal-clip-grid" id="modal-grid-crowd"></div>
         </div>
 
-        <!-- Emergency Folder -->
-        <div class="modal-folder-group">
+        <!-- Emergency Folder Group -->
+        <div class="modal-folder-group" id="group-emergency">
           <div class="modal-folder-label">
-            <span>data/videos/emergency/</span>
-            <span id="modal-cnt-emerg">0 clips</span>
+            <span>EMERGENCY CORRIDOR PREEMPTION (data/videos/emergency/)</span>
+            <span id="modal-cnt-emerg">0 items</span>
           </div>
           <div class="modal-clip-grid" id="modal-grid-emergency"></div>
         </div>
 
-        <!-- Uploads Folder -->
-        <div class="modal-folder-group">
+        <!-- Uploads Folder Group -->
+        <div class="modal-folder-group" id="group-uploads">
           <div class="modal-folder-label">
-            <span>data/videos/uploads/</span>
-            <span id="modal-cnt-upload">0 clips</span>
+            <span>USER UPLOADS (data/uploads/)</span>
+            <span id="modal-cnt-upload">0 items</span>
           </div>
           <div class="modal-clip-grid" id="modal-grid-uploads"></div>
         </div>
@@ -1442,6 +1372,7 @@
     let allScenarios = [];
     let currentScenarioId = "";
     let activeFolder = "vehicles";
+    let currentModalTab = "all";
 
     // Load Scenarios Catalog
     async function loadScenarios() {
@@ -1463,26 +1394,59 @@
       const emergClips = allScenarios.filter(s => s.category === 'emergency');
       const uploadClips = allScenarios.filter(s => s.category === 'uploads' || s.category === 'upload');
 
-      document.getElementById('count-veh').textContent = vehClips.length;
-      document.getElementById('count-crowd').textContent = crowdClips.length;
-      document.getElementById('count-emerg').textContent = emergClips.length;
-      document.getElementById('count-upload').textContent = uploadClips.length;
+      // Header button count
+      const headerDataCount = document.getElementById('header-data-count');
+      if (headerDataCount) headerDataCount.textContent = allScenarios.length;
 
-      document.getElementById('modal-cnt-veh').textContent = `${vehClips.length} clips`;
-      document.getElementById('modal-cnt-crowd').textContent = `${crowdClips.length} clips`;
-      document.getElementById('modal-cnt-emerg').textContent = `${emergClips.length} clips`;
-      document.getElementById('modal-cnt-upload').textContent = `${uploadClips.length} clips`;
+      // Modal badges and tab counts
+      const modalTotalBadge = document.getElementById('modal-total-badge');
+      if (modalTotalBadge) modalTotalBadge.textContent = `${allScenarios.length} sources`;
+
+      const tabCntAll = document.getElementById('modal-tab-cnt-all');
+      if (tabCntAll) tabCntAll.textContent = allScenarios.length;
+      const tabCntVeh = document.getElementById('modal-tab-cnt-veh');
+      if (tabCntVeh) tabCntVeh.textContent = vehClips.length;
+      const tabCntCrowd = document.getElementById('modal-tab-cnt-crowd');
+      if (tabCntCrowd) tabCntCrowd.textContent = crowdClips.length;
+      const tabCntEmerg = document.getElementById('modal-tab-cnt-emerg');
+      if (tabCntEmerg) tabCntEmerg.textContent = emergClips.length;
+      const tabCntUpload = document.getElementById('modal-tab-cnt-upload');
+      if (tabCntUpload) tabCntUpload.textContent = uploadClips.length;
+
+      const mCntVeh = document.getElementById('modal-cnt-veh');
+      if (mCntVeh) mCntVeh.textContent = `${vehClips.length} items`;
+      const mCntCrowd = document.getElementById('modal-cnt-crowd');
+      if (mCntCrowd) mCntCrowd.textContent = `${crowdClips.length} items`;
+      const mCntEmerg = document.getElementById('modal-cnt-emerg');
+      if (mCntEmerg) mCntEmerg.textContent = `${emergClips.length} items`;
+      const mCntUpload = document.getElementById('modal-cnt-upload');
+      if (mCntUpload) mCntUpload.textContent = `${uploadClips.length} items`;
+    }
+
+    function filterModalTab(tabKey) {
+      currentModalTab = tabKey;
+      document.querySelectorAll('.modal-filter-tab').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('modal-tab-' + tabKey);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const groups = ['vehicles', 'crowd', 'emergency', 'uploads'];
+      groups.forEach(g => {
+        const grpEl = document.getElementById('group-' + g);
+        if (!grpEl) return;
+        if (tabKey === 'all' || tabKey === g) {
+          grpEl.style.display = 'block';
+        } else {
+          grpEl.style.display = 'none';
+        }
+      });
     }
 
     function switchFolder(folderName) {
       activeFolder = folderName;
-      document.querySelectorAll('.vms-tab-btn').forEach(btn => btn.classList.remove('active'));
-      const activeBtn = document.getElementById('tab-' + folderName);
-      if (activeBtn) activeBtn.classList.add('active');
       renderActiveFolderClips();
     }
 
-    // Render clip pills directly in the bar for the active folder
+    // Render clip pills directly in the bar for the active folder (if container exists)
     function renderActiveFolderClips() {
       const container = document.getElementById('active-folder-clips');
       if (!container) return;
@@ -1522,11 +1486,8 @@
           const found = allScenarios.find(s => s.id === scenarioId);
           if (found) {
             const folderName = (found.category === 'upload') ? 'uploads' : found.category;
-            if (folderName !== activeFolder) {
-              switchFolder(folderName);
-            } else {
-              renderActiveFolderClips();
-            }
+            activeFolder = folderName;
+            renderActiveFolderClips();
             document.getElementById('osd-feed-title').textContent = `CAM · ${found.name.toUpperCase()} (${found.file_name})`;
             document.getElementById('osd-audio-tag').textContent = found.has_audio ? '16 kHz AUDIO DEMUXED' : 'AUDIO: MUTE';
             document.getElementById('osd-audio-tag').style.color = found.has_audio ? '#10b981' : '#64748b';
@@ -1582,31 +1543,61 @@
         const clips = allScenarios.filter(s => targetCats.includes(s.category));
 
         if (clips.length === 0) {
-          grid.innerHTML = `<span style="font-size:0.72rem; color:#64748b; font-family:var(--font-mono);">No clips in data/videos/${cat.folderName}/</span>`;
+          grid.innerHTML = `<span style="font-size:0.72rem; color:#64748b; font-family:var(--font-mono);">No media files in data/videos/${cat.folderName}/</span>`;
           return;
         }
 
         clips.forEach(s => {
+          const isImg = s.is_image || /\.(jpg|jpeg|png|webp|bmp)$/i.test(s.file_name);
+          const icon = isImg ? '🖼️ IMAGE' : '🎥 VIDEO';
+          const isActive = s.id === currentScenarioId;
+
           const item = document.createElement('div');
-          item.className = 'modal-clip-item ' + (s.id === currentScenarioId ? 'active' : '');
+          item.className = 'modal-clip-item ' + (isActive ? 'active' : '');
           item.onclick = () => selectScenario(s.id);
           item.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.25rem;">
-              <strong style="color:#f1f5f9; font-size:0.8rem;">${s.name}</strong>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+              <div style="display:flex; align-items:center; gap:0.4rem;">
+                <span style="font-size:0.65rem; font-family:var(--font-mono); background:#1e293b; color:#94a3b8; padding:0.1rem 0.35rem; border-radius:3px;">${icon}</span>
+                <strong style="color:#f1f5f9; font-size:0.82rem;">${s.name}</strong>
+              </div>
+              ${isActive ? '<span style="font-size:0.65rem; font-family:var(--font-mono); color:#10b981; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:0.1rem 0.4rem; border-radius:3px; font-weight:700;">▶ ACTIVE</span>' : ''}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.25rem; font-size:0.72rem;">
+              <span style="font-family:var(--font-mono); color:#38bdf8;">${s.file_name}</span>
               ${s.has_audio ? '<span class="clip-chip-audio">16kHz Audio</span>' : '<span style="color:#64748b; font-size:0.65rem; font-family:var(--font-mono);">Mute</span>'}
             </div>
-            <div style="font-family:var(--font-mono); font-size:0.72rem; color:#38bdf8;">${s.file_name}</div>
-            <div style="font-size:0.68rem; color:#94a3b8; margin-top:0.25rem;">${s.description || ''}</div>
+            ${s.description ? `<div style="font-size:0.68rem; color:#94a3b8; margin-top:0.2rem; line-height:1.3;">${s.description}</div>` : ''}
           `;
           grid.appendChild(item);
         });
       });
     }
 
-    // Video Upload
+    // Video / Image Upload
     async function handleFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/scenarios/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentScenarioId = data.scenario.id;
+          activeFolder = 'uploads';
+          await loadScenarios();
+          closeFolderModal();
+        }
+      } catch (err) {
+        console.error('File upload failed:', err);
+      }
+    }
 
       const formData = new FormData();
       formData.append('file', file);
